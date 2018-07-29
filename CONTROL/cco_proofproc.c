@@ -488,7 +488,97 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
    ClauseSetFree(tmp_set);
    // printf("# ...simplify_watchlist()\n");
 }
+/*	Compute ALL ZFC comprehension instances with the given clause
+ *  John Hester
+ * 
+ * 	Parts Taken from ClauseTSTPPrint in order to get string
+ * 
+ *  WFormulaTPTPParse provides input in to WFormula_p format
+ *  WFormClauseToClause provides transformation from WFormula_p to Clause_p format
+ *  Both in ccl_formula_wrapper.c
+ * 
+ * 
+ *  parent alias seems to be same as clause but with different name for variables
+*/
 
+void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
+              Clause_p parent_alias, ClauseSet_p
+              with_set, ClauseSet_p store, VarBank_p
+              freshvars, ParamodulationType pm_type) 
+{
+	
+	printf("computing all comprehensions call test\n");
+	FILE *fp = fopen("processedclauses2.txt", "wb+");
+	ClauseTSTPPrint(fp,clause,1,1);
+	fprintf(fp,"\n");
+	
+	rewind(fp);
+	
+	char *formula = malloc(sizeof(char) * 1);
+	int capacity = 1;
+	int length_of_formula = 0;
+	int terminate_string_with_null = 0;
+
+	do
+	{
+		if (capacity == length_of_formula)
+		{
+			capacity = 2 * length_of_formula;
+			formula = realloc(formula, capacity * sizeof(char));
+		}
+		if (terminate_string_with_null == 1)
+		{
+			formula[length_of_formula] = 0;
+			break;
+		}
+		int ch = fgetc(fp);
+		if (ch == -1) 
+		{
+			if (formula[length_of_formula-1] != '.')
+			{
+				printf("\nRead end of file without a preceding period!!!!\n");
+			}
+		}
+		char casted = (char) ch;
+		formula[length_of_formula] = casted;
+		if (casted == '.')
+		{
+			terminate_string_with_null = 1;
+		}
+		length_of_formula += 1;
+	}
+	while(1);
+	
+	printf("Length of formula: %d\n",length_of_formula);
+	
+	printf("\nThis is the formula that has been read after printing: %s\n", formula);
+	
+	fclose(fp);
+	
+	FILE *fc = fopen("processedclauses.txt", "ab+");
+	fprintf(fc,"%s\n",formula);
+	fclose(fc);
+	free(formula);
+	
+	// Create a scanner that reads the file processedclauses2.txt
+	
+	Scanner_p in;
+	//in = CreateScanner(StreamTypeFile,"processedclauses2.txt",true,NULL);
+	in = CreateScanner(StreamTypeFile,"processedclauses2.txt",true,NULL);
+	
+	// Read the file
+	
+	WFormula_p inputformula;
+	inputformula = WFormulaTPTPParse(in, bank);
+	
+	Clause_p inputclause;
+	inputclause = WFormClauseToClause(inputformula);
+	
+	// destructors
+	DestroyScanner(in);
+	WFormulaFree(inputformula);
+	ClauseFree(inputclause);
+}
 
 /*-----------------------------------------------------------------------
 //
@@ -506,6 +596,17 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
 static void generate_new_clauses(ProofState_p state, ProofControl_p
                                  control, Clause_p clause, Clause_p tmp_copy)
 {
+ /////////////////////////////////////////////////////////////////////////
+	int number_of_terms = TBTermNodes(state->terms);
+	printf("number of term nodes?: %d\n", number_of_terms);
+	
+	compute_all_comprehensions(state->terms, control->ocb,
+                                    tmp_copy, clause,
+                                    state->processed_pos_rules,
+                                    state->tmp_store, state->freshvars,
+                                    control->heuristic_parms.pm_type);
+    
+///////////////////////////////////////////////////////////////////////
    if(control->heuristic_parms.enable_eq_factoring)
    {
       state->factor_count+=
@@ -543,12 +644,14 @@ static void generate_new_clauses(ProofState_p state, ProofControl_p
                                     state->processed_pos_rules,
                                     state->tmp_store, state->freshvars,
                                     control->heuristic_parms.pm_type);
+                                    
          state->paramod_count+=
             ComputeAllParamodulants(state->terms, control->ocb,
                                     tmp_copy, clause,
                                     state->processed_pos_eqns,
                                     state->tmp_store, state->freshvars,
                                     control->heuristic_parms.pm_type);
+                                    
 
          if(control->heuristic_parms.enable_neg_unit_paramod && !ClauseIsNegative(clause))
          { /* We never need to try to overlap purely negative clauses! */
@@ -1561,6 +1664,7 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
    }
    if((empty = insert_new_clauses(state, control)))
    {
+	  printf("empty = insert_new_clauses, inserting new clauses\n"); //////////////////////////////////////////////////////////////
       PStackPushP(state->extract_roots, empty);
       return empty;
    }
@@ -1607,6 +1711,7 @@ Clause_p Saturate(ProofState_p state, ProofControl_p control, long
          (!state->watchlist||!ClauseSetEmpty(state->watchlist)))
    {
       count++;
+      printf("processing new clause!\n");
       unsatisfiable = ProcessClause(state, control, answer_limit);
       if(unsatisfiable)
       {
