@@ -567,12 +567,39 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 	in = CreateScanner(StreamTypeFile,"processedclauses2.txt",true,NULL);
 	
 	// Read the file
+	printf("\nScanner created\n");
+
+	
+	IOFormat format = TPTPFormat;
+	
+	ScannerSetFormat(in, format);
+	
+	if(ScannerGetFormat(in) == TPTPFormat) 
+	{
+		printf("\nTPTP\n");
+	}
+	else if(ScannerGetFormat(in) == TSTPFormat) 
+	{
+		printf("\nTSTP\n");
+	}
+	else 
+	{
+		printf("\nScanner configured incorrectly\n");
+	}
+	//////////////////////////
+	//  Replace identifier with input_clause
+	
+	/////////////////////////////
 	
 	WFormula_p inputformula;
-	inputformula = WFormulaTPTPParse(in, bank);
+	inputformula = WFormulaParse(in, bank);
+	//inputformula = WFormClauseParse(in, bank);
+	//inputformula = WFormulaTPTPParse(in, bank);	
 	
 	Clause_p inputclause;
-	inputclause = WFormClauseToClause(inputformula);
+	//inputclause = ClauseParse(in, bank);
+	
+	//inputclause = WFormClauseToClause(inputformula);
 	
 	// destructors
 	DestroyScanner(in);
