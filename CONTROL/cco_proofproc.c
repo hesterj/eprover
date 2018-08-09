@@ -562,6 +562,13 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 	char* cnf = "cnf";
 	
 	formula += 3;
+	printf("\nrealloc\n");
+	realloc(input_clause,sizeof(input_clause)+sizeof(formula));
+	
+	printf("\nstrcat\n");
+	strcat(input_clause,formula);
+	
+	printf("\nThis is the concatenated input_clause: %s\n",input_clause);
 	
 	
 	
