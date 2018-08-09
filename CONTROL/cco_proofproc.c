@@ -555,6 +555,45 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 	
 	fclose(fp);
 	
+		//////////////////////////
+	//  Replace identifier with input_clause
+	// git test
+	
+	char* str = "fof";
+	char* rep = "input_clause";
+	
+	    char *p = strstr(formula, str);
+    do  
+    {   
+        if(p)
+        {
+            char buf[1024];
+            memset(buf,'\0',strlen(buf));
+
+            if(formula == p)
+            {
+                strcpy(buf,rep);
+                strcat(buf,p+strlen(str));  
+            }
+            else
+            {
+                strncpy(buf,formula,strlen(formula) - strlen(p));
+                strcat(buf,rep);
+                strcat(buf,p+strlen(str));
+            }
+
+            memset(formula,'\0',strlen(formula));
+            strcpy(formula,buf);
+        }   
+
+    }while(p && (p = strstr(formula, str)));
+    
+    ////////////////////////
+    
+    printf("\nThis is the formula that will be parsed: %s\n", formula);
+    
+    ////////////////////////
+	
 	FILE *fc = fopen("processedclauses.txt", "ab+");
 	fprintf(fc,"%s\n",formula);
 	fclose(fc);
@@ -586,9 +625,6 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 	{
 		printf("\nScanner configured incorrectly\n");
 	}
-	//////////////////////////
-	//  Replace identifier with input_clause
-	// git test
 	
 	/////////////////////////////
 	
