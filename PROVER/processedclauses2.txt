@@ -1,1 +1,1 @@
-cnf(i_0_13, plain, (j(Y1,e)=Y1)).
+cnf(i_0_143, plain, (inductive(omega))).

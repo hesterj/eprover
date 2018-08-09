@@ -555,14 +555,49 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 	
 	fclose(fp);
 	
+	////////////////////////
+	
+	char* input_clause = "input_clause";
+	char* fof = "fof";
+	char* cnf = "cnf";
+	
+	formula += 3;
+	
+	
+	
 		//////////////////////////
 	//  Replace identifier with input_clause
 	// git test
+	/*
+	char* ident_check;
+	char* fof = "fof";
+	char* cnf = "cnf";
+		
+	char str[5];
 	
-	char* str = "fof";
+	ident_check = strstr(fof,formula);
+	memset(str, '\0', sizeof(str));  // initialize
+	
+	printf("\nident_check: %s\n",ident_check);
+	
+	if (strcmp(ident_check,formula) == 0)
+	{
+		printf("\nfof\n");
+		strcpy(str,fof);
+	}
+	else 
+	{
+		printf("\ncnf\n");
+		strcpy(str,cnf);
+	}
+	
+	assert(str);  //check it's not null ptr
+	
+	printf("\nrewriting string\n");
+	
 	char* rep = "input_clause";
 	
-	    char *p = strstr(formula, str);
+	char *p = strstr(formula, str);
     do  
     {   
         if(p)
@@ -588,6 +623,12 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 
     }while(p && (p = strstr(formula, str)));
     
+    free(str);
+    free(cnf);
+    free(rep);
+    free(fof);
+    free(ident_check);
+    */
     ////////////////////////
     
     printf("\nThis is the formula that will be parsed: %s\n", formula);
