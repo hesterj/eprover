@@ -488,6 +488,32 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
    ClauseSetFree(tmp_set);
    // printf("# ...simplify_watchlist()\n");
 }
+
+/*  Replace substring with another...
+ * 
+ * 
+ * 
+ * 
+ * 
+*/
+
+char *replace_str(char *str, char *orig, char *rep)
+{
+  static char buffer[4096];
+  char *p;
+
+  if(!(p = strstr(str, orig)))  // Is 'orig' even in 'str'?
+    return str;
+
+  strncpy(buffer, str, p-str); // Copy characters from 'str' start to 'orig' st$
+  buffer[p-str] = '\0';
+
+  sprintf(buffer+(p-str), "%s%s", rep, p+strlen(orig));
+
+  return buffer;
+}
+
+
 /*	Compute ALL ZFC comprehension instances with the given clause
  *  John Hester
  * 
@@ -501,15 +527,15 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
  *  parent alias seems to be same as clause but with different name for variables
 */
 
-void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
+long compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
               Clause_p parent_alias, ClauseSet_p
               with_set, ClauseSet_p store, VarBank_p
-              freshvars, ParamodulationType pm_type) 
+              freshvars, ParamodulationType pm_type, ProofState_p state) 
 {
 	
 	printf("computing all comprehensions call test\n");
-	FILE *fp = fopen("processedclauses2.txt", "wb+");
-	ClauseTSTPPrint(fp,clause,1,1);
+	FILE *fp = fopen("currentformula.txt", "wb+");
+	ClauseTSTPPrint(fp,clause,1,1);  //This is necessary because it is where we read the current clause from!
 	fprintf(fp,"\n");
 	
 	rewind(fp);
@@ -518,6 +544,8 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 	int capacity = 1;
 	int length_of_formula = 0;
 	int terminate_string_with_null = 0;
+	
+	/////////////////////////  Read the current formula that has been printed to fp
 
 	do
 	{
@@ -529,6 +557,7 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 		if (terminate_string_with_null == 1)
 		{
 			formula[length_of_formula] = 0;
+			printf("\nRead end of input formula\n");
 			break;
 		}
 		int ch = fgetc(fp);
@@ -544,6 +573,7 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 		if (casted == '.')
 		{
 			terminate_string_with_null = 1;
+			printf("\nRead terminating period\n");
 		}
 		length_of_formula += 1;
 	}
@@ -553,143 +583,94 @@ void compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 	
 	printf("\nThis is the formula that has been read after printing: %s\n", formula);
 	
-	fclose(fp);
-	
 	////////////////////////
 	
-	char* input_clause = "input_clause";
-	char* fof = "fof";
-	char* cnf = "cnf";
+	//  Now we need to relabel the input formula as an axiom
 	
-	formula += 3;
-	printf("\nrealloc\n");
-	realloc(input_clause,sizeof(input_clause)+sizeof(formula));
+	char *input_axiom;
+	input_axiom = replace_str(formula,"plain","axiom");
 	
-	printf("\nstrcat\n");
-	strcat(input_clause,formula);
-	
-	printf("\nThis is the concatenated input_clause: %s\n",input_clause);
-	
-	
-	
-		//////////////////////////
-	//  Replace identifier with input_clause
-	// git test
-	/*
-	char* ident_check;
-	char* fof = "fof";
-	char* cnf = "cnf";
-		
-	char str[5];
-	
-	ident_check = strstr(fof,formula);
-	memset(str, '\0', sizeof(str));  // initialize
-	
-	printf("\nident_check: %s\n",ident_check);
-	
-	if (strcmp(ident_check,formula) == 0)
-	{
-		printf("\nfof\n");
-		strcpy(str,fof);
-	}
-	else 
-	{
-		printf("\ncnf\n");
-		strcpy(str,cnf);
-	}
-	
-	assert(str);  //check it's not null ptr
-	
-	printf("\nrewriting string\n");
-	
-	char* rep = "input_clause";
-	
-	char *p = strstr(formula, str);
-    do  
-    {   
-        if(p)
-        {
-            char buf[1024];
-            memset(buf,'\0',strlen(buf));
+	//////////////////  
 
-            if(formula == p)
-            {
-                strcpy(buf,rep);
-                strcat(buf,p+strlen(str));  
-            }
-            else
-            {
-                strncpy(buf,formula,strlen(formula) - strlen(p));
-                strcat(buf,rep);
-                strcat(buf,p+strlen(str));
-            }
-
-            memset(formula,'\0',strlen(formula));
-            strcpy(formula,buf);
-        }   
-
-    }while(p && (p = strstr(formula, str)));
-    
-    free(str);
-    free(cnf);
-    free(rep);
-    free(fof);
-    free(ident_check);
-    */
-    ////////////////////////
-    
-    printf("\nThis is the formula that will be parsed: %s\n", formula);
-    
-    ////////////////////////
 	
 	FILE *fc = fopen("processedclauses.txt", "ab+");
-	fprintf(fc,"%s\n",formula);
+	fprintf(fc,"%s\n",input_axiom);
 	fclose(fc);
-	free(formula);
 	
-	// Create a scanner that reads the file processedclauses2.txt
+	
+	/////////////////////// 
+	
+	ProofState_p sanity;  // This is to ensure that things are being parsed correctly
+	sanity = ProofStateAlloc(state->signature->distinct_props);
 	
 	Scanner_p in;
-	//in = CreateScanner(StreamTypeFile,"processedclauses2.txt",true,NULL);
-	in = CreateScanner(StreamTypeFile,"processedclauses2.txt",true,NULL);
-	
-	// Read the file
-	printf("\nScanner created\n");
-
-	
-	IOFormat format = TPTPFormat;
-	
+	StrTree_p skip_includes = NULL;
+	in = CreateScanner(StreamTypeFile,"processedclauses.txt",true,NULL);
+	IOFormat format = TSTPFormat;
 	ScannerSetFormat(in, format);
+	printf("\nHow many axioms are in state? %ld\n",state->axioms->members);
+	/*
+    FormulaAndClauseSetParse(in,
+                               sanity->f_axioms,
+                               sanity->watchlist,
+                               sanity->terms,
+                               NULL,
+                               &skip_includes);
+    */
+    FormulaAndClauseSetParse(in,
+                               state->f_axioms,
+                               state->watchlist,
+                               state->terms,
+                               NULL,
+                               &skip_includes);
+    CheckInpTok(in, NoToken);
+    DestroyScanner(in);
+    
+	//  Lets check if the dumpster is on fire
 	
-	if(ScannerGetFormat(in) == TPTPFormat) 
-	{
-		printf("\nTPTP\n");
-	}
-	else if(ScannerGetFormat(in) == TSTPFormat) 
-	{
-		printf("\nTSTP\n");
-	}
-	else 
-	{
-		printf("\nScanner configured incorrectly\n");
-	}
+	FILE *fd = fopen("sanitycheck.txt","ab+");
 	
-	/////////////////////////////
+	long cnf_size;
+	//FormulaSetArchive(state->f_axioms, state->f_ax_archive);
+	/*
+	cnf_size = FormulaSetCNF(sanity->f_axioms,
+                               sanity->f_ax_archive,
+                               sanity->axioms,
+                               sanity->terms,
+                               sanity->freshvars,
+                               sanity->gc_terms);
+    */
+    cnf_size = FormulaSetCNF(state->f_axioms,
+                               state->f_ax_archive,
+                               state->axioms,
+                               state->terms,
+                               state->freshvars,
+                               state->gc_terms);
+    
+    ClauseSetTSTPPrint(fd,state->axioms,true);
+    fprintf(fd,"\n################\n");
+    
+	fclose(fp);
+	fclose(fd);
 	
-	WFormula_p inputformula;
-	inputformula = WFormulaParse(in, bank);
-	//inputformula = WFormClauseParse(in, bank);
-	//inputformula = WFormulaTPTPParse(in, bank);	
+	printf("\nHow many axioms are in sanity? %ld\n",sanity->axioms->members);
+	printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
 	
-	Clause_p inputclause;
-	//inputclause = ClauseParse(in, bank);
+	//Clause_p recovered;
+	//recovered = ClauseSetExtractFirst(sanity->axioms);
+	//recovered = ClauseCanonize(recovered);
+	//ClauseSetTPTPType(recovered,state->signature->distinct_props);  // This doesn't feel right...
+	//ClauseSetInsert(store, recovered);
+	//ClauseSetIndexedInsertClause(store, recovered);
+	ProofStateFree(sanity);
+	//ClauseFree(recovered);
+	///////////////////  Burn the files used as intermediates!!!!  So bad to be doing it this way!
 	
-	//inputclause = WFormClauseToClause(inputformula);
+	remove("processedclauses.txt");
+	remove("currentformula.txt");
+	printf("\nleaving method\n");
+	return 1;
 	
-	// destructors
-	DestroyScanner(in);
-	WFormulaFree(inputformula);
-	ClauseFree(inputclause);
 }
 
 /*-----------------------------------------------------------------------
@@ -712,11 +693,12 @@ static void generate_new_clauses(ProofState_p state, ProofControl_p
 	int number_of_terms = TBTermNodes(state->terms);
 	printf("number of term nodes?: %d\n", number_of_terms);
 	
-	compute_all_comprehensions(state->terms, control->ocb,
+	state->paramod_count += compute_all_comprehensions(state->terms, control->ocb,
                                     tmp_copy, clause,
                                     state->processed_pos_rules,
                                     state->tmp_store, state->freshvars,
-                                    control->heuristic_parms.pm_type);
+                                    control->heuristic_parms.pm_type,
+                                    state);
     
 ///////////////////////////////////////////////////////////////////////
    if(control->heuristic_parms.enable_eq_factoring)

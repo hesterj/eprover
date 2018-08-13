@@ -1,1 +1,0 @@
-cnf(i_0_143, plain, (inductive(omega))).

@@ -625,10 +625,13 @@ WFormula_p WFormClauseParse(Scanner_p in, TB_p terms)
 
 Clause_p WFormClauseToClause(WFormula_p form)
 {
+   printf("\nTFormulaCollectClause\n");
    Clause_p res  = TFormulaCollectClause(form->tformula, form->terms, NULL);
+   printf("\res->properties\n");
    res->properties = form->properties;
    if(form->info)
    {
+	  printf("\nform->info\n");
       res->info = ClauseInfoAlloc(form->info->name,
                                   form->info->source,
                                   form->info->line,

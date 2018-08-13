@@ -357,8 +357,8 @@ static void print_proof_stats(ProofState_p proofstate,
 int main(int argc, char* argv[])
 {
    int              retval = NO_ERROR;
-   CLState_p        state;
-   ProofState_p     proofstate;
+   CLState_p        state; //
+   ProofState_p     proofstate; //
    ProofControl_p   proofcontrol;
    Clause_p         success = NULL,
       filter_success;

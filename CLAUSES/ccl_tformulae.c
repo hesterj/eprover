@@ -1335,6 +1335,7 @@ Clause_p TFormulaCollectClause(TFormula_p form, TB_p terms,
                                VarBank_p fresh_vars)
 {
    Clause_p res;
+   printf("\nWhere is the segmentation fault 1");
    Eqn_p lit_list = NULL, tmp_list = NULL, lit;
    PStack_p stack, lit_stack = PStackAlloc();
    PStackPointer i;
@@ -1342,9 +1343,11 @@ Clause_p TFormulaCollectClause(TFormula_p form, TB_p terms,
    /*printf("tformula_collect_clause(): ");
      TFormulaTPTPPrint(GlobalOut, terms, form, true);
      printf("\n"); */
-
+   printf("\nWhere is the segmentation fault 2");
    stack = PStackAlloc();
+   printf("\nWhere is the segmentation fault 2.5");
    PStackPushP(stack, form);
+   printf("\nWhere is the segmentation fault 3");
    while(!PStackEmpty(stack))
    {
       form = PStackPopP(stack);
@@ -1366,15 +1369,17 @@ Clause_p TFormulaCollectClause(TFormula_p form, TB_p terms,
    //lit = PStackPopP(lit_stack);
    //EqnListInsertFirst(&lit_list, lit);
    //}
+   printf("\nWhere is the segmentation fault 4");
    for(i=0; i<PStackGetSP(lit_stack); i++)
    {
       lit = PStackElementP(lit_stack, i);
       EqnListInsertFirst(&lit_list, lit);
    }
    PStackFree(lit_stack);
-
+   printf("\nWhere is the segmentation fault 5");
    if(fresh_vars)
    {
+	  printf("\nWhere is the segmentation fault 6");
       Subst_p  normsubst = SubstAlloc();
       VarBankResetVCounts(fresh_vars);
       NormSubstEqnList(lit_list, normsubst, fresh_vars);
