@@ -30,10 +30,20 @@ PERF_CTR_DEFINE(ParamodTimer);
 PERF_CTR_DEFINE(BWRWTimer);
 
 
+
 /*---------------------------------------------------------------------*/
 /*                      Forward Declarations                           */
 /*---------------------------------------------------------------------*/
 
+bool upperCase(char c);
+bool integer(char c);
+char* TSTPToString(Clause_p clause);
+long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
+              Clause_p parent_alias, ClauseSet_p
+              with_set, ClauseSet_p store, VarBank_p
+              freshvars, ParamodulationType pm_type, ProofState_p state);
+char* freeVariables(Clause_p clause);
+void addFormulaToState(char* fname, ProofState_p state);
 
 /*---------------------------------------------------------------------*/
 /*                         Internal Functions                          */
@@ -513,26 +523,79 @@ char *replace_str(char *str, char *orig, char *rep)
   return buffer;
 }
 
-
-/*	Compute ALL ZFC comprehension instances with the given clause
- *  John Hester
+/* John Hester
  * 
- * 	Parts Taken from ClauseTSTPPrint in order to get string
- * 
- *  WFormulaTPTPParse provides input in to WFormula_p format
- *  WFormClauseToClause provides transformation from WFormula_p to Clause_p format
- *  Both in ccl_formula_wrapper.c
+ * Check if character is uppercase...
  * 
  * 
- *  parent alias seems to be same as clause but with different name for variables
 */
 
-long compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
-              Clause_p parent_alias, ClauseSet_p
-              with_set, ClauseSet_p store, VarBank_p
-              freshvars, ParamodulationType pm_type, ProofState_p state) 
+bool upperCase(char c)
 {
-	
+	if (c >= 'a' && c <= 'z') {
+		return false;
+	}
+	return true;
+}
+
+/* John Hester
+ * 
+ * Check if character is integer...
+ * 
+ * 
+*/
+
+bool integer(char c)
+{
+	if (c >= '0' && c <= '9') {
+		return true;
+	}
+	return false;
+}
+
+/* John Hester
+ * 
+ *  Takes an input formula in TPTP fromat and returns the symbols for "free" variables
+ *  Here "free" for fof means universally quantified over with scope the entire formula
+ *  For cnf free means not quantified over...
+ * 
+ *  The return type is a comma separated string
+ *
+*/
+
+char* freeVariables(Clause_p clause)
+{
+	char *input = TSTPToString(clause);
+	if (input[0]=='c') 
+	{
+		printf("\ncnf\n");
+	}
+	else if (input[0]=='f')
+	{
+		printf("\nfof\n");
+	}
+	else
+	{
+		printf("\nError in freeVariables!!\n");
+	}
+	int size = sizeof(input);
+	printf("\n size of clause: %d\n",size);
+	printf(input);
+	return input;
+}
+
+/* John Hester
+ * 
+ * Prints clause to a file in TPTP format, reads it as a string, returns it for manipulation
+ * 
+ * 
+ * 
+ * 
+ *
+*/
+
+char* TSTPToString(Clause_p clause) 
+{
 	printf("computing all comprehensions call test\n");
 	FILE *fp = fopen("currentformula.txt", "wb+");
 	ClauseTSTPPrint(fp,clause,1,1);  //This is necessary because it is where we read the current clause from!
@@ -578,45 +641,32 @@ long compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
 		length_of_formula += 1;
 	}
 	while(1);
+	fclose(fp);
 	
 	printf("Length of formula: %d\n",length_of_formula);
 	
 	printf("\nThis is the formula that has been read after printing: %s\n", formula);
-	
-	////////////////////////
-	
-	//  Now we need to relabel the input formula as an axiom
-	
-	char *input_axiom;
-	input_axiom = replace_str(formula,"plain","axiom");
-	
-	//////////////////  
+	return formula;
+}
 
-	
-	FILE *fc = fopen("processedclauses.txt", "ab+");
-	fprintf(fc,"%s\n",input_axiom);
-	fclose(fc);
-	
-	
-	/////////////////////// 
-	
-	ProofState_p sanity;  // This is to ensure that things are being parsed correctly
-	sanity = ProofStateAlloc(state->signature->distinct_props);
-	
+/*  John Hester
+ * 
+ *  Reads target file determined by fname and adds the TPTP format clauses/formulas in them to the axioms of state
+ * 
+ * 
+ *
+ * 
+*/
+
+void addFormulaToState(char* fname, ProofState_p state) 
+{
+
 	Scanner_p in;
 	StrTree_p skip_includes = NULL;
-	in = CreateScanner(StreamTypeFile,"processedclauses.txt",true,NULL);
+	in = CreateScanner(StreamTypeFile,fname,true,NULL);
 	IOFormat format = TSTPFormat;
 	ScannerSetFormat(in, format);
-	printf("\nHow many axioms are in state? %ld\n",state->axioms->members);
-	/*
-    FormulaAndClauseSetParse(in,
-                               sanity->f_axioms,
-                               sanity->watchlist,
-                               sanity->terms,
-                               NULL,
-                               &skip_includes);
-    */
+	//printf("\nHow many axioms are in state? %ld\n",state->axioms->members);
     FormulaAndClauseSetParse(in,
                                state->f_axioms,
                                state->watchlist,
@@ -625,46 +675,59 @@ long compute_all_comprehensions(TB_p bank, OCB_p ocb, Clause_p clause,
                                &skip_includes);
     CheckInpTok(in, NoToken);
     DestroyScanner(in);
-    
 	//  Lets check if the dumpster is on fire
 	
-	FILE *fd = fopen("sanitycheck.txt","ab+");
+	//FILE *fd = fopen("sanitycheck.txt","ab+");
 	
 	long cnf_size;
-	//FormulaSetArchive(state->f_axioms, state->f_ax_archive);
-	/*
-	cnf_size = FormulaSetCNF(sanity->f_axioms,
-                               sanity->f_ax_archive,
-                               sanity->axioms,
-                               sanity->terms,
-                               sanity->freshvars,
-                               sanity->gc_terms);
-    */
     cnf_size = FormulaSetCNF(state->f_axioms,
                                state->f_ax_archive,
                                state->axioms,
                                state->terms,
                                state->freshvars,
                                state->gc_terms);
-    
-    ClauseSetTSTPPrint(fd,state->axioms,true);
-    fprintf(fd,"\n################\n");
-    
-	fclose(fp);
-	fclose(fd);
+    //ClauseSetTSTPPrint(fd,state->axioms,true);
+}
+
+
+/*	Compute ALL ZFC comprehension instances with the given clause
+ *  John Hester
+ * 
+ * 	Parts Taken from ClauseTSTPPrint in order to get string
+ * 
+ *  WFormulaTPTPParse provides input in to WFormula_p format
+ *  WFormClauseToClause provides transformation from WFormula_p to Clause_p format
+ *  Both in ccl_formula_wrapper.c
+ * look at TBPrintTermFull, TBPrintTerm
+ * 
+ *  parent alias seems to be same as clause but with different name for variables
+*/
+
+long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
+              Clause_p parent_alias, ClauseSet_p
+              with_set, ClauseSet_p store, VarBank_p
+              freshvars, ParamodulationType pm_type, ProofState_p state) 
+{
 	
-	printf("\nHow many axioms are in sanity? %ld\n",sanity->axioms->members);
+	char *formula = TSTPToString(clause);
+	char *input_axiom;
+	input_axiom = replace_str(formula,"plain","axiom");
+	
+	char *test = freeVariables(clause);
+	
+	printf(input_axiom);
+	
+	free(formula);
+	free(test);
+	
+	char *fname = "processedclauses.txt";
+	FILE *fc = fopen(fname, "ab+");
+	fprintf(fc,"%s\n",input_axiom);
+	fclose(fc);
+	
+	addFormulaToState(fname,state);
+	
 	printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
-	
-	//Clause_p recovered;
-	//recovered = ClauseSetExtractFirst(sanity->axioms);
-	//recovered = ClauseCanonize(recovered);
-	//ClauseSetTPTPType(recovered,state->signature->distinct_props);  // This doesn't feel right...
-	//ClauseSetInsert(store, recovered);
-	//ClauseSetIndexedInsertClause(store, recovered);
-	ProofStateFree(sanity);
-	//ClauseFree(recovered);
-	///////////////////  Burn the files used as intermediates!!!!  So bad to be doing it this way!
 	
 	remove("processedclauses.txt");
 	remove("currentformula.txt");
@@ -693,7 +756,7 @@ static void generate_new_clauses(ProofState_p state, ProofControl_p
 	int number_of_terms = TBTermNodes(state->terms);
 	printf("number of term nodes?: %d\n", number_of_terms);
 	
-	state->paramod_count += compute_all_comprehensions(state->terms, control->ocb,
+	state->paramod_count += compute_replacement(state->terms, control->ocb,
                                     tmp_copy, clause,
                                     state->processed_pos_rules,
                                     state->tmp_store, state->freshvars,
