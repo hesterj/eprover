@@ -532,10 +532,10 @@ char *replace_str(char *str, char *orig, char *rep)
 
 bool upperCase(char c)
 {
-	if (c >= 'a' && c <= 'z') {
-		return false;
+	if (c >= 'A' && c <= 'Z') {
+		return true;
 	}
-	return true;
+	return false;
 }
 
 /* John Hester
@@ -565,10 +565,68 @@ bool integer(char c)
 
 char* freeVariables(Clause_p clause)
 {
+	
 	char *input = TSTPToString(clause);
+	char *output = malloc(sizeof(char) * 1);
+	int capacity = 1;
+	int length_of_formula = 0;
+	int size = strlen(input);
+	
+	printf("\nsize: %d\n", size);
 	if (input[0]=='c') 
 	{
 		printf("\ncnf\n");
+		printf("\n%s\n",input);
+		for (int i = 3;i<size;i++) {
+			if (input[i] == '.') break;
+			else if (upperCase(input[i]) == true) 
+			{
+				printf("\n capital: %c\n",input[i]);
+				if (capacity == length_of_formula)
+					{
+						capacity = 2 * length_of_formula;
+						output = realloc(output, capacity * sizeof(char));
+					}
+				output[length_of_formula] = input[i];
+				length_of_formula += 1;
+				// Now we need to check for trailing integer variable identifiers and add them to output
+				for (int d = i+1;d<size; d++) 
+				{
+					if (integer(input[d]) == true) 
+					{
+						if (capacity == length_of_formula)
+						{
+							capacity = 2 * length_of_formula;
+							output = realloc(output, capacity * sizeof(char));
+						}
+						output[length_of_formula] = input[d];
+						length_of_formula += 1;
+						printf("added integer variable ident\n");
+					}
+					else 
+					{
+						if (capacity == length_of_formula)
+						{
+							capacity = 2 * length_of_formula;
+							output = realloc(output, capacity * sizeof(char));
+						}
+						output[length_of_formula] = ',';
+						length_of_formula += 1;
+						break;						
+					}
+					
+				}
+				
+			}
+			// At this point we should have found all of the variables with identifiers and put it all in to a comma separated list
+			// Null terminate it
+			if (capacity == length_of_formula)
+			{
+				capacity = length_of_formula+1;
+				output = realloc(output, capacity * sizeof(char));
+			}
+			output[length_of_formula] = 0;
+		}
 	}
 	else if (input[0]=='f')
 	{
@@ -578,10 +636,37 @@ char* freeVariables(Clause_p clause)
 	{
 		printf("\nError in freeVariables!!\n");
 	}
-	int size = sizeof(input);
+	
 	printf("\n size of clause: %d\n",size);
-	printf(input);
-	return input;
+	printf("This is the string of variables found: %s\n",output);
+	
+	////////////////////////////////////////////////
+	// Now we need to tokenize and delete duplicates
+	char *final = malloc(sizeof(char) * 100);
+	
+	const char s[2] = ",";
+	char *token;
+    token = strtok(output, s);
+    while( token != NULL ) 
+    {
+		if (strstr(final,token) == 0)
+		{
+			char *p = ",";
+			strcat(final,token);
+			strcat(final,p);
+		}
+		//printf( " %s\n", token );
+		token = strtok(NULL, s);
+	}
+	
+	int length = strlen(final);
+	printf("%c\n",final[length-1]);
+	final[length-1]=0;
+	
+	printf("This is the string of variables found, with duplicates removed: %s\n",final);
+	
+	free(output);
+	return final;
 }
 
 /* John Hester
@@ -596,7 +681,7 @@ char* freeVariables(Clause_p clause)
 
 char* TSTPToString(Clause_p clause) 
 {
-	printf("computing all comprehensions call test\n");
+	//printf("computing all comprehensions call test\n");
 	FILE *fp = fopen("currentformula.txt", "wb+");
 	ClauseTSTPPrint(fp,clause,1,1);  //This is necessary because it is where we read the current clause from!
 	fprintf(fp,"\n");
@@ -620,7 +705,7 @@ char* TSTPToString(Clause_p clause)
 		if (terminate_string_with_null == 1)
 		{
 			formula[length_of_formula] = 0;
-			printf("\nRead end of input formula\n");
+			//printf("\nRead end of input formula\n");
 			break;
 		}
 		int ch = fgetc(fp);
@@ -628,7 +713,7 @@ char* TSTPToString(Clause_p clause)
 		{
 			if (formula[length_of_formula-1] != '.')
 			{
-				printf("\nRead end of file without a preceding period!!!!\n");
+				//printf("\nRead end of file without a preceding period!!!!\n");
 			}
 		}
 		char casted = (char) ch;
@@ -636,23 +721,23 @@ char* TSTPToString(Clause_p clause)
 		if (casted == '.')
 		{
 			terminate_string_with_null = 1;
-			printf("\nRead terminating period\n");
+			//printf("\nRead terminating period\n");
 		}
 		length_of_formula += 1;
 	}
 	while(1);
 	fclose(fp);
 	
-	printf("Length of formula: %d\n",length_of_formula);
+	//printf("Length of formula: %d\n",length_of_formula);
 	
-	printf("\nThis is the formula that has been read after printing: %s\n", formula);
+	//printf("\nThis is the formula that has been read after printing: %s\n", formula);
 	return formula;
 }
 
 /*  John Hester
  * 
  *  Reads target file determined by fname and adds the TPTP format clauses/formulas in them to the axioms of state
- * 
+ *  Does NOT add to state->tmp_store, which would be ideal...
  * 
  *
  * 
@@ -715,7 +800,7 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	
 	char *test = freeVariables(clause);
 	
-	printf(input_axiom);
+	//printf(input_axiom);
 	
 	free(formula);
 	free(test);
@@ -727,11 +812,11 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	
 	addFormulaToState(fname,state);
 	
-	printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
+	//printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
 	
 	remove("processedclauses.txt");
 	remove("currentformula.txt");
-	printf("\nleaving method\n");
+	//printf("\nleaving method\n");
 	return 1;
 	
 }
