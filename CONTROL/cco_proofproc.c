@@ -42,7 +42,9 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
               Clause_p parent_alias, ClauseSet_p
               with_set, ClauseSet_p store, VarBank_p
               freshvars, ParamodulationType pm_type, ProofState_p state);
-char* freeVariables(Clause_p clause);
+char* CNFFreeVariables(char *input);
+char* FOFFreeVariables(char *input);
+char* FreeVariables(Clause_p clause);
 void addFormulaToState(char* fname, ProofState_p state);
 
 /*---------------------------------------------------------------------*/
@@ -553,26 +555,132 @@ bool integer(char c)
 	return false;
 }
 
-/* John Hester
+/*  Returns a comma separated string of the FREE variables of a FOF expression
+ *  Only call if it's FOF!!!
  * 
- *  Takes an input formula in TPTP fromat and returns the symbols for "free" variables
- *  Here "free" for fof means universally quantified over with scope the entire formula
- *  For cnf free means not quantified over...
  * 
- *  The return type is a comma separated string
- *
+ * 
+ * 
 */
 
-char* freeVariables(Clause_p clause)
+char* FOFFreeVariables(char *input)
 {
+	char *output = malloc(sizeof(char) * 1);
+	int capacity = 1;
+	int length_of_formula = 0;
+	int size = strlen(input);
+	bool reading = false;
 	
-	char *input = TSTPToString(clause);
+	//printf("\nsize: %d\n", size);
+	if (input[0]=='f') 
+	{
+		printf("\nfof\n");
+		printf("\n%s\n",input);
+		for (int i = 3;i<size;i++) {
+			if (input[i] == '.' || input[i] == ']') break;
+			if (input[i] == '!') reading = true;
+			if (upperCase(input[i]) == true && reading == true) 
+			{
+				printf("\n capital: %c\n",input[i]);
+				if (capacity == length_of_formula)
+					{
+						capacity = 2 * length_of_formula;
+						output = realloc(output, capacity * sizeof(char));
+					}
+				output[length_of_formula] = input[i];
+				length_of_formula += 1;
+				// Now we need to check for trailing integer variable identifiers and add them to output
+				for (int d = i+1;d<size; d++) 
+				{
+					if (integer(input[d]) == true) 
+					{
+						if (capacity == length_of_formula)
+						{
+							capacity = 2 * length_of_formula;
+							output = realloc(output, capacity * sizeof(char));
+						}
+						output[length_of_formula] = input[d];
+						length_of_formula += 1;
+						printf("added integer variable ident\n");
+					}
+					else 
+					{
+						if (capacity == length_of_formula)
+						{
+							capacity = 2 * length_of_formula;
+							output = realloc(output, capacity * sizeof(char));
+						}
+						output[length_of_formula] = ',';
+						length_of_formula += 1;
+						break;						
+					}
+					
+				}
+				
+			}
+			// At this point we should have found all of the variables with identifiers and put it all in to a comma separated list
+			// Null terminate it
+			if (capacity == length_of_formula)
+			{
+				capacity = length_of_formula+1;
+				output = realloc(output, capacity * sizeof(char));
+			}
+			output[length_of_formula] = 0;
+		}
+	}
+	else
+	{
+		printf("\nCalling FOF free variables on something that is not a fof...\n");
+	}
+	
+	printf("\n size of clause: %d\n",size);
+	printf("This is the string of variables found: %s\n",output);
+	
+	////////////////////////////////////////////////
+	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
+	char *final = malloc(sizeof(char) * 100);
+	
+	const char s[2] = ",";
+	char *token;
+    token = strtok(output, s);
+    while( token != NULL ) 
+    {
+		if (strstr(final,token) == 0)
+		{
+			char *p = ",";
+			strcat(final,token);
+			strcat(final,p);
+		}
+		//printf( " %s\n", token );
+		token = strtok(NULL, s);
+	}
+	//  null terminate the string to be safe
+	int length = strlen(final);
+	//printf("%c\n",final[length-1]);
+	final[length-1]=0;
+	
+	//printf("This is the string of variables found, with duplicates removed: %s\n",final);
+	
+	free(output);
+	return final;
+}
+
+/*  Returns a comma separated string of the FREE variables of a CNF expression
+ *  Only call if it's CNF!!!
+ * 
+ *  John Hester
+ * 
+ * 
+*/
+
+char* CNFFreeVariables(char *input)
+{
 	char *output = malloc(sizeof(char) * 1);
 	int capacity = 1;
 	int length_of_formula = 0;
 	int size = strlen(input);
 	
-	printf("\nsize: %d\n", size);
+	//printf("\nsize: %d\n", size);
 	if (input[0]=='c') 
 	{
 		printf("\ncnf\n");
@@ -628,20 +736,16 @@ char* freeVariables(Clause_p clause)
 			output[length_of_formula] = 0;
 		}
 	}
-	else if (input[0]=='f')
-	{
-		printf("\nfof\n");
-	}
 	else
 	{
-		printf("\nError in freeVariables!!\n");
+		printf("\nCalling CNF free variables on something that is not a cnf...\n");
 	}
 	
 	printf("\n size of clause: %d\n",size);
 	printf("This is the string of variables found: %s\n",output);
 	
 	////////////////////////////////////////////////
-	// Now we need to tokenize and delete duplicates
+	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
 	char *final = malloc(sizeof(char) * 100);
 	
 	const char s[2] = ",";
@@ -658,15 +762,51 @@ char* freeVariables(Clause_p clause)
 		//printf( " %s\n", token );
 		token = strtok(NULL, s);
 	}
-	
+	//  null terminate the string to be safe
 	int length = strlen(final);
-	printf("%c\n",final[length-1]);
+	//printf("%c\n",final[length-1]);
 	final[length-1]=0;
 	
-	printf("This is the string of variables found, with duplicates removed: %s\n",final);
+	//printf("This is the string of variables found, with duplicates removed: %s\n",final);
 	
 	free(output);
 	return final;
+}
+
+/* John Hester
+ * 
+ *  Takes an input formula in TPTP fromat and returns the symbols for "free" variables
+ *  Here "free" for fof means universally quantified over with scope the entire formula
+ *  For cnf free means not quantified over...
+ * 
+ *  The return type is a comma separated string
+ *
+*/
+
+char* FreeVariables(Clause_p clause)
+{
+	
+	char *input = TSTPToString(clause);
+	char *output;
+	
+	//printf("\nsize: %d\n", size);
+	if (input[0]=='c') 
+	{
+		output = CNFFreeVariables(input);
+	}
+	else if (input[0]=='f')
+	{
+		output = FOFFreeVariables(input);
+	}
+	else
+	{
+		printf("\nError in variables!!\n");
+	}
+	
+	
+	printf("This is the string of variables found, with duplicates removed: %s\n",output);
+	
+	return output;
 }
 
 /* John Hester
@@ -798,7 +938,7 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	char *input_axiom;
 	input_axiom = replace_str(formula,"plain","axiom");
 	
-	char *test = freeVariables(clause);
+	char *test = FreeVariables(clause);
 	
 	//printf(input_axiom);
 	
@@ -839,7 +979,7 @@ static void generate_new_clauses(ProofState_p state, ProofControl_p
 {
  /////////////////////////////////////////////////////////////////////////
 	int number_of_terms = TBTermNodes(state->terms);
-	printf("number of term nodes?: %d\n", number_of_terms);
+	//printf("number of term nodes?: %d\n", number_of_terms);
 	
 	state->paramod_count += compute_replacement(state->terms, control->ocb,
                                     tmp_copy, clause,
