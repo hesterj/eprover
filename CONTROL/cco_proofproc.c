@@ -46,6 +46,9 @@ char* CNFFreeVariables(char *input);
 char* FOFFreeVariables(char *input);
 char* FreeVariables(Clause_p clause);
 void addFormulaToState(char* fname, ProofState_p state);
+int count_characters(const char *str, char character);
+char* Replacement(char *input);
+char* NewVariables(char *inp);
 
 /*---------------------------------------------------------------------*/
 /*                         Internal Functions                          */
@@ -501,6 +504,32 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
    // printf("# ...simplify_watchlist()\n");
 }
 
+/*  Returns four new TPTP variables not occuring in the given list of variables
+ * 
+ *  John Hester
+ * 
+ * 
+ * 
+*/
+
+char *NewVariables(char *inp)
+{
+	char *newvars = calloc(100, sizeof(char));
+	char c = inp[0];
+	char zero = '0';
+	char max = zero;  //we will use a number identifier larger than any other to ensure that the variable is fresh
+	int size = strlen(inp);
+	for (int i = 0; i<size;i++)
+	{
+		if ((inp[i] >= zero &&) (integer(inp[i]) == true))
+		{
+			max = inp[i];
+		}
+	}
+	return newvars;
+}
+
+
 /*  Replace substring with another...
  * 
  * 
@@ -523,6 +552,23 @@ char *replace_str(char *str, char *orig, char *rep)
   sprintf(buffer+(p-str), "%s%s", rep, p+strlen(orig));
 
   return buffer;
+}
+
+/* Counts the characters in a string...
+ * 
+*/
+
+int count_characters(const char *str, char character)
+{
+    const char *p = str;
+    int count = 0;
+
+    do {
+        if (*p == character)
+            count++;
+    } while (*(p++));
+
+    return count;
 }
 
 /* John Hester
@@ -554,6 +600,34 @@ bool integer(char c)
 	}
 	return false;
 }
+
+/*  Actually creates the parameter-free replacement instance
+ *  First checks if the input has exactly two free variables, then builds it
+ *  Returns null if the inference is not possible, else returns the REPL0 string
+ * 
+ *  John Hester
+ * 
+*/
+
+char* Replacement(char *input) {
+	char *variables = CNFFreeVariables(input);
+	
+	int count = count_characters(variables, ',');
+	if (count != 1) 
+	{
+		return NULL;
+	}
+	else 
+	{
+		printf("\nTwo free variables!\n");
+		char var1[3] = {variables[0],variables[1]};
+		char var2[3] = {variables[3],variables[4]};
+		printf("var1: %s\n",var1);
+		printf("var2: %s\n",var2);
+		return input;
+	}
+}
+
 
 /*  Returns a comma separated string of the FREE variables of a FOF expression
  *  Only call if it's FOF!!!
@@ -741,18 +815,20 @@ char* CNFFreeVariables(char *input)
 		printf("\nCalling CNF free variables on something that is not a cnf...\n");
 	}
 	
-	printf("\n size of clause: %d\n",size);
-	printf("This is the string of variables found: %s\n",output);
+	//printf("\n size of clause: %d\n",size);
+	printf("Has this string of variables discovered hieroglyphics?: %s\n",output);
 	
 	////////////////////////////////////////////////
 	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
-	char *final = malloc(sizeof(char) * 100);
+	char *final = calloc(100, sizeof(char));
 	
 	const char s[2] = ",";
 	char *token;
     token = strtok(output, s);
-    while( token != NULL ) 
-    {
+    printf("token: %s\n", token);
+
+	while( token != NULL ) 
+	{
 		if (strstr(final,token) == 0)
 		{
 			char *p = ",";
@@ -765,8 +841,10 @@ char* CNFFreeVariables(char *input)
 	//  null terminate the string to be safe
 	int length = strlen(final);
 	//printf("%c\n",final[length-1]);
-	final[length-1]=0;
+	printf("Final: %s\n",final);
 	
+	final[length-1]=0;
+	printf("Final2: %s\n",final);
 	//printf("This is the string of variables found, with duplicates removed: %s\n",final);
 	
 	free(output);
@@ -951,6 +1029,9 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	fclose(fc);
 	
 	addFormulaToState(fname,state);
+	
+	Replacement(input_axiom);
+	//free(input_axiom);
 	
 	//printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
 	
