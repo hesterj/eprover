@@ -625,7 +625,6 @@ char* Replacement(char *input)
 	char *strippedformula = calloc(strlen(input),sizeof(char));
 	char *identifier = calloc(20,sizeof(char));
 	int count = count_characters(variables, ',');
-	bool active = false;
 	
 	if (count != 1) 
 	{
@@ -634,30 +633,39 @@ char* Replacement(char *input)
 	//Now we need to remove the identifiers from the formula
 	int length = strlen(input);
 	int commacount = 0;
-	for (int i=0;i<length;i++)   //  There is a segmentation fault somewhere in this for loop!!!
-	{
-		printf("Current char: %c\n",input[i]);		
-		if (input[i] == ',' && active == false)
+	int parencount = 0;
+	
+	printf("Length: %d\n",length);
+	printf("\nThis is the formula we're doing a replacement instance of: %s\n\n", input);
+	
+	for (int i=0;i<length;i++)   //  separate the formula and the identifier
+	{		
+		if (input[i] == ',')
 		{ 
 			commacount += 1;
-			if (commacount == 2)
-			{
-				active = true;
-			}
-			continue;
+			if (commacount == 2) continue;
 		}
-		if (commacount == 1)
+		if (input[i] == '(')
 		{
-			char *temp = {input[i]};
+			parencount += 1;
+			if (parencount == 1) continue;
+		}
+		
+		if (parencount == 1 && commacount == 0)
+		{
+			char temp[1] = {input[i]};
 			strcat(identifier,temp);
+			
 		}
 		if (commacount > 1)
 		{
-			printf("More than one comma: %c\n",input[i]);
-			char *temp = {input[i]};
+			if (input[i] == '.') break;
+			char temp[1] = {input[i]};
 			strcat(strippedformula,temp);
 		}
 	}
+	int lenstrip = strlen(strippedformula);
+	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
 	printf("\nThis is its identifier: %s\n", identifier);
 	
 	printf("\nThis is the stripped version: %s\n", strippedformula);
@@ -673,7 +681,7 @@ char* Replacement(char *input)
 	
 	newvariables = NewVariables(variables);
 	printf("This is the list of five new variables: %s\n",newvariables);
-	
+
 	char c2 = newvariables[0];
 	char c3 = newvariables[3];
 	char c4 = newvariables[6];
@@ -691,11 +699,6 @@ char* Replacement(char *input)
 	char *var6 = {c6,d6};
 	
 	//now actually build the replacement inference
-	printf("\nThis is the formula we're doing a replacement instance of: %s\n\n", input);
-	
-	printf("\nThis is its identifier: %s\n", identifier);
-	
-	printf("\nThis is the stripped version: %s\n", strippedformula);
 	
 	char *replacement = calloc(300,sizeof(char));
 	

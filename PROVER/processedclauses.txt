@@ -1,1 +1,0 @@
-cnf(i_0_20, axiom, (Y1=Y2|~member(Y1,singleton(Y2)))).
