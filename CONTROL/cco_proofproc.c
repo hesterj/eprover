@@ -504,7 +504,7 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
    // printf("# ...simplify_watchlist()\n");
 }
 
-/*  Returns four new TPTP variables not occuring in the given list of variables
+/*  Returns FIVE new TPTP variables not occuring in the given list of TWO variables
  * 
  *  John Hester
  * 
@@ -512,20 +512,28 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
  * 
 */
 
-char *NewVariables(char *inp)
+char *NewVariables(char *variables)
 {
 	char *newvars = calloc(100, sizeof(char));
-	char c = inp[0];
-	char zero = '0';
-	char max = zero;  //we will use a number identifier larger than any other to ensure that the variable is fresh
-	int size = strlen(inp);
-	for (int i = 0; i<size;i++)
+	char d;
+	//printf("\nTwo free variables!\n");
+	char c1 = variables[0];
+	char c2 = variables[3];
+	for (int i =65;i<91;i++)
 	{
-		if ((inp[i] >= zero &&) (integer(inp[i]) == true))
+		if (i != c1 && i != c2)
 		{
-			max = inp[i];
+			//printf("%c\n",i);
+			d = i;
+			break;
 		}
 	}
+	for (int i=48;i<53;i++)
+	{
+		char temp[3] = {d,i,','};
+		strcat(newvars,temp);
+	}
+	newvars[14] = 0;
 	return newvars;
 }
 
@@ -604,28 +612,97 @@ bool integer(char c)
 /*  Actually creates the parameter-free replacement instance
  *  First checks if the input has exactly two free variables, then builds it
  *  Returns null if the inference is not possible, else returns the REPL0 string
- * 
+ *  Only works for variables with one following integer
  *  John Hester
  * 
 */
 
-char* Replacement(char *input) {
-	char *variables = CNFFreeVariables(input);
+char* Replacement(char *input) 
+{
 	
+	char *variables = CNFFreeVariables(input);
+	char *newvariables;
+	char *strippedformula = calloc(strlen(input),sizeof(char));
+	char *identifier = calloc(20,sizeof(char));
 	int count = count_characters(variables, ',');
+	bool active = false;
+	
 	if (count != 1) 
 	{
 		return NULL;
 	}
-	else 
+	//Now we need to remove the identifiers from the formula
+	int length = strlen(input);
+	int commacount = 0;
+	for (int i=0;i<length;i++)   //  There is a segmentation fault somewhere in this for loop!!!
 	{
-		printf("\nTwo free variables!\n");
-		char var1[3] = {variables[0],variables[1]};
-		char var2[3] = {variables[3],variables[4]};
-		printf("var1: %s\n",var1);
-		printf("var2: %s\n",var2);
-		return input;
+		printf("Current char: %c\n",input[i]);		
+		if (input[i] == ',' && active == false)
+		{ 
+			commacount += 1;
+			if (commacount == 2)
+			{
+				active = true;
+			}
+			continue;
+		}
+		if (commacount == 1)
+		{
+			char *temp = {input[i]};
+			strcat(identifier,temp);
+		}
+		if (commacount > 1)
+		{
+			printf("More than one comma: %c\n",input[i]);
+			char *temp = {input[i]};
+			strcat(strippedformula,temp);
+		}
 	}
+	printf("\nThis is its identifier: %s\n", identifier);
+	
+	printf("\nThis is the stripped version: %s\n", strippedformula);
+	
+	//  List out the variables
+	
+	char c0 = variables[0];
+	char c1 = variables[3];
+	char d0 = variables[1];
+	char d1 = variables[4];
+	char *var1 = {c1,d1};
+	char *var0 = {c0,d0};
+	
+	newvariables = NewVariables(variables);
+	printf("This is the list of five new variables: %s\n",newvariables);
+	
+	char c2 = newvariables[0];
+	char c3 = newvariables[3];
+	char c4 = newvariables[6];
+	char c5 = newvariables[9];
+	char c6 = newvariables[12];
+	char d2 = newvariables[1];
+	char d3 = newvariables[4];
+	char d4 = newvariables[7];
+	char d5 = newvariables[10];
+	char d6 = newvariables[13];
+	char *var2 = {c2,d2};
+	char *var3 = {c3,d3};
+	char *var4 = {c4,d4};
+	char *var5 = {c5,d5};
+	char *var6 = {c6,d6};
+	
+	//now actually build the replacement inference
+	printf("\nThis is the formula we're doing a replacement instance of: %s\n\n", input);
+	
+	printf("\nThis is its identifier: %s\n", identifier);
+	
+	printf("\nThis is the stripped version: %s\n", strippedformula);
+	
+	char *replacement = calloc(300,sizeof(char));
+	
+	strcat(replacement, "![");
+	//strcat(replacement)
+	
+	return replacement;
 }
 
 
@@ -648,14 +725,14 @@ char* FOFFreeVariables(char *input)
 	//printf("\nsize: %d\n", size);
 	if (input[0]=='f') 
 	{
-		printf("\nfof\n");
-		printf("\n%s\n",input);
+		//printf("\nfof\n");
+		//printf("\n%s\n",input);
 		for (int i = 3;i<size;i++) {
 			if (input[i] == '.' || input[i] == ']') break;
 			if (input[i] == '!') reading = true;
 			if (upperCase(input[i]) == true && reading == true) 
 			{
-				printf("\n capital: %c\n",input[i]);
+				//printf("\n capital: %c\n",input[i]);
 				if (capacity == length_of_formula)
 					{
 						capacity = 2 * length_of_formula;
@@ -675,7 +752,7 @@ char* FOFFreeVariables(char *input)
 						}
 						output[length_of_formula] = input[d];
 						length_of_formula += 1;
-						printf("added integer variable ident\n");
+						//printf("added integer variable ident\n");
 					}
 					else 
 					{
@@ -707,8 +784,8 @@ char* FOFFreeVariables(char *input)
 		printf("\nCalling FOF free variables on something that is not a fof...\n");
 	}
 	
-	printf("\n size of clause: %d\n",size);
-	printf("This is the string of variables found: %s\n",output);
+	//printf("\n size of clause: %d\n",size);
+	//printf("This is the string of variables found: %s\n",output);
 	
 	////////////////////////////////////////////////
 	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
@@ -757,13 +834,13 @@ char* CNFFreeVariables(char *input)
 	//printf("\nsize: %d\n", size);
 	if (input[0]=='c') 
 	{
-		printf("\ncnf\n");
-		printf("\n%s\n",input);
+		//printf("\ncnf\n");
+		//printf("\n%s\n",input);
 		for (int i = 3;i<size;i++) {
 			if (input[i] == '.') break;
 			else if (upperCase(input[i]) == true) 
 			{
-				printf("\n capital: %c\n",input[i]);
+				//printf("\n capital: %c\n",input[i]);
 				if (capacity == length_of_formula)
 					{
 						capacity = 2 * length_of_formula;
@@ -783,7 +860,7 @@ char* CNFFreeVariables(char *input)
 						}
 						output[length_of_formula] = input[d];
 						length_of_formula += 1;
-						printf("added integer variable ident\n");
+						//printf("added integer variable ident\n");
 					}
 					else 
 					{
@@ -816,7 +893,7 @@ char* CNFFreeVariables(char *input)
 	}
 	
 	//printf("\n size of clause: %d\n",size);
-	printf("Has this string of variables discovered hieroglyphics?: %s\n",output);
+	//printf("Has this string of variables discovered hieroglyphics?: %s\n",output);
 	
 	////////////////////////////////////////////////
 	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
@@ -825,7 +902,7 @@ char* CNFFreeVariables(char *input)
 	const char s[2] = ",";
 	char *token;
     token = strtok(output, s);
-    printf("token: %s\n", token);
+    //printf("token: %s\n", token);
 
 	while( token != NULL ) 
 	{
@@ -841,10 +918,10 @@ char* CNFFreeVariables(char *input)
 	//  null terminate the string to be safe
 	int length = strlen(final);
 	//printf("%c\n",final[length-1]);
-	printf("Final: %s\n",final);
+	//printf("Final: %s\n",final);
 	
 	final[length-1]=0;
-	printf("Final2: %s\n",final);
+	//printf("Final2: %s\n",final);
 	//printf("This is the string of variables found, with duplicates removed: %s\n",final);
 	
 	free(output);
@@ -882,7 +959,7 @@ char* FreeVariables(Clause_p clause)
 	}
 	
 	
-	printf("This is the string of variables found, with duplicates removed: %s\n",output);
+	//printf("This is the string of variables found, with duplicates removed: %s\n",output);
 	
 	return output;
 }
@@ -1014,6 +1091,8 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	
 	char *formula = TSTPToString(clause);
 	char *input_axiom;
+	char *replacement;
+	
 	input_axiom = replace_str(formula,"plain","axiom");
 	
 	char *test = FreeVariables(clause);
@@ -1030,7 +1109,8 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	
 	addFormulaToState(fname,state);
 	
-	Replacement(input_axiom);
+	replacement = Replacement(input_axiom);
+	printf("This is the replacement instance: %s\n",replacement);
 	//free(input_axiom);
 	
 	//printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
