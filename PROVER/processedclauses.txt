@@ -1,0 +1,1 @@
+fof(rpmi_0_20,axiom,![Y1]:?[Y2]:![A0]:( (Y1=A0|~member(Y1,singleton(Y2)))<=>(A0=Y2))=>(![A1]:?[A2]:![A3]:(member(A3,A2)<=>?[A4]:(member(A4,A1)& (Y1=A3|~member(Y1,singleton(Y2))))))).

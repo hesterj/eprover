@@ -560,12 +560,13 @@ long FormulaSetCNF(FormulaSet_p set, FormulaSet_p archive,
    long gc_threshold = old_nodes*TFORMULA_GC_LIMIT;
 
    FormulaSetSimplify(set, terms);
-   // printf("FormulaSetSimplify done\n");
+    printf("FormulaSetSimplify done\n");
    TFormulaSetIntroduceDefs(set, archive, terms);
-   // printf("Definitions introduced\n");
+    printf("Definitions introduced\n");
 
    while(!FormulaSetEmpty(set))
    {
+	   printf("FormulaSet not empty yet\n");
       handle = FormulaSetExtractFirst(set);
       // WFormulaPrint(stdout, handle, true);
       // fprintf(stdout, "\n");
@@ -855,12 +856,14 @@ long TFormulaToCNF(WFormula_p form, FormulaProperties type, ClauseSet_p set,
 void TFormulaSetDelTermpProp(FormulaSet_p set, TermProperties prop)
 {
    WFormula_p handle;
-
+	printf("TFormulaSetDelTermpProp");
    for(handle = set->anchor->succ; handle!=set->anchor; handle =
           handle->succ)
    {
+	   printf("TFormulaSetDelTermpProp in for loop but done nothing");
       if(handle->tformula)
       {
+		  printf("handle->tformula");
          TermDelProp(handle->tformula, DEREF_NEVER, prop);
       }
    }
@@ -982,17 +985,17 @@ long TFormulaSetIntroduceDefs(FormulaSet_p set, FormulaSet_p archive, TB_p terms
    long       polarity;
    WFormula_p w_def, c_def, formula, arch_form;
 
-   //printf("TFormulaSetIntroduceDefs()...\n");
+   printf("TFormulaSetIntroduceDefs()...\n");
    TFormulaSetDelTermpProp(set, TPCheckFlag|TPPosPolarity|TPNegPolarity);
-   //printf("Deleted properties\n");
+   printf("Deleted properties\n");
    FormulaSetMarkPolarity(set);
-   //printf("Marked polarites\n");
+   printf("Marked polarites\n");
 
-   //printf("About to find defs\n");
+   printf("About to find defs\n");
    TFormulaSetFindDefs(set, terms, &defs, renamed_forms);
 
    res = PStackGetSP(renamed_forms);
-   //printf("About to Create defs\n");
+   printf("About to Create defs\n");
 
    for(i=0; i<PStackGetSP(renamed_forms); i++)
    {
@@ -1036,7 +1039,7 @@ long TFormulaSetIntroduceDefs(FormulaSet_p set, FormulaSet_p archive, TB_p terms
    }
    PStackFree(renamed_forms);
 
-   // printf("About to apply defs\n");
+    printf("About to apply defs\n");
    for(formula = set->anchor->succ; formula!=set->anchor; formula=formula->succ)
    {
       TFormulaApplyDefs(formula, terms, &defs);

@@ -1008,6 +1008,15 @@ TFormula_p TFormulaCopyDef(TB_p bank, TFormula_p form, long blocked,
    }
    if(!res)
    {
+	if (form->f_code == bank->sig->and_code) printf("Please\n");
+	if (form->f_code == bank->sig->or_code) printf("God\n");
+	if (form->f_code == bank->sig->impl_code) printf("Let\n");
+	if (form->f_code == bank->sig->equiv_code) printf("Me\n");
+	if (form->f_code == bank->sig->nand_code) printf("Find\n");
+	if (form->f_code == bank->sig->nor_code) printf("The\n");
+	if (form->f_code == bank->sig->bimpl_code) printf("Seg\n");
+	if (form->f_code == bank->sig->xor_code) printf("Fault\n");
+	if (form->f_code == bank->sig->not_code) printf("Amen\n");
       if((form->f_code == bank->sig->and_code)||
          (form->f_code == bank->sig->or_code)||
          (form->f_code == bank->sig->impl_code)||

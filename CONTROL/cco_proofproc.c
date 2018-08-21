@@ -519,7 +519,7 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
 
 char *NewVariables(char *variables)
 {
-	char *newvars = calloc(100, sizeof(char));
+	char *newvars = calloc(200, sizeof(char));
 	char d;
 	//printf("\nTwo free variables!\n");
 	char c1 = variables[0];
@@ -628,7 +628,7 @@ char* Replacement(char *input)
 	char *variables = CNFFreeVariables(input);
 	char *newvariables;
 	char *strippedformula = calloc(strlen(input),sizeof(char));
-	char *identifier = calloc(20,sizeof(char));
+	char *identifier = calloc(50,sizeof(char));
 	int count = count_characters(variables, ',');
 	
 	if (count != 1) 
@@ -640,8 +640,8 @@ char* Replacement(char *input)
 	int commacount = 0;
 	int parencount = 0;
 	
-	printf("Length: %d\n",length);
-	printf("\nThis is the formula we're doing a replacement instance of: %s\n\n", input);
+	//printf("Length: %d\n",length);
+	//printf("\nThis is the formula we're doing a replacement instance of: %s\n\n", input);
 	
 	for (int i=0;i<length;i++)   //  separate the formula and the identifier
 	{		
@@ -658,59 +658,105 @@ char* Replacement(char *input)
 		
 		if (parencount == 1 && commacount == 0)
 		{
-			char temp[1] = {input[i]};
+			char temp[2] = {input[i]};
 			strcat(identifier,temp);
 			
 		}
 		if (commacount > 1)
 		{
 			if (input[i] == '.') break;
-			char temp[1] = {input[i]};
+			char temp[2] = {input[i]};
 			strcat(strippedformula,temp);
 		}
 	}
 	int lenstrip = strlen(strippedformula);
 	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
-	printf("\nThis is its identifier: %s\n", identifier);
+	//printf("\nThis is its identifier: %s\n", identifier);
 	
-	printf("\nThis is the stripped version: %s\n", strippedformula);
+	//printf("\nThis is the stripped version: %s\n", strippedformula);
 	
 	//  List out the variables
 	
+	newvariables = NewVariables(variables);
+	
 	char c0 = variables[0];
 	char c1 = variables[3];
-	char d0 = variables[1];
-	char d1 = variables[4];
-	char *var1 = {c1,d1};
-	char *var0 = {c0,d0};
-	
-	newvariables = NewVariables(variables);
-	printf("This is the list of five new variables: %s\n",newvariables);
-
 	char c2 = newvariables[0];
 	char c3 = newvariables[3];
 	char c4 = newvariables[6];
 	char c5 = newvariables[9];
 	char c6 = newvariables[12];
+	char d0 = variables[1];
+	char d1 = variables[4];
 	char d2 = newvariables[1];
 	char d3 = newvariables[4];
 	char d4 = newvariables[7];
 	char d5 = newvariables[10];
 	char d6 = newvariables[13];
-	char *var2 = {c2,d2};
-	char *var3 = {c3,d3};
-	char *var4 = {c4,d4};
-	char *var5 = {c5,d5};
-	char *var6 = {c6,d6};
+	char var0[3] = {c0,d0};
+	char var1[3] = {c1,d1};
+	char var2[3] = {c2,d2};
+	char var3[3] = {c3,d3};
+	char var4[3] = {c4,d4};
+	char var5[3] = {c5,d5};
+	char var6[3] = {c6,d6};
 	
+	free(newvariables);
+	free(variables);
+	
+	//printf("Var4: %c + %c = %s\n",c4,d4,var4);
 	//now actually build the replacement inference
 	
-	char *replacement = calloc(300,sizeof(char));
+	char *replacement = calloc(500,sizeof(char));
+	strcat(replacement,"![");
+	strcat(replacement,var0);
+	strcat(replacement,"]:?[");
+	strcat(replacement,var1);
+	strcat(replacement,"]:![");
+	strcat(replacement,var2);
+	strcat(replacement,"]:(");
+	char *phiv0v2;
+	phiv0v2 = replace_str(strippedformula,var1,var2);
+	strcat(replacement,phiv0v2);
+	strcat(replacement,"<=>(");
+	strcat(replacement,var2);
+	strcat(replacement,"=");
+	strcat(replacement,var1);
+	strcat(replacement,"))=>(![");
+	strcat(replacement,var3);
+	strcat(replacement,"]:?[");
+	strcat(replacement,var4);
+	strcat(replacement,"]:![");
+	strcat(replacement,var5);
+	strcat(replacement,"]:(member(");
+	strcat(replacement,var5);
+	strcat(replacement,",");
+	strcat(replacement,var4);
+	strcat(replacement,")<=>?[");
+	strcat(replacement,var6);
+	strcat(replacement,"]:(member(");
+	strcat(replacement,var6);
+	strcat(replacement,",");
+	strcat(replacement,var3);
+	strcat(replacement,")&");
+	char *phiv6v5;
+	phiv6v5 = replace_str(strippedformula,var0,var6);
+	phiv6v5 = replace_str(strippedformula,var1,var5);
+	strcat(replacement,phiv6v5);
+	strcat(replacement,")))).");
 	
-	strcat(replacement, "![");
-	//strcat(replacement)
+	char *fof;
+	fof = calloc(500,sizeof(char));
+	strcat(fof,"fof(rpm");
+	strcat(fof,identifier);
+	strcat(fof,",axiom,");
+	strcat(fof,replacement);
 	
-	return replacement;
+	free(strippedformula);
+	free(replacement);
+	free(identifier);
+	
+	return fof;
 }
 
 
@@ -905,7 +951,7 @@ char* CNFFreeVariables(char *input)
 	
 	////////////////////////////////////////////////
 	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
-	char *final = calloc(100, sizeof(char));
+	char *final = calloc(200, sizeof(char));
 	
 	const char s[2] = ",";
 	char *token;
@@ -927,8 +973,11 @@ char* CNFFreeVariables(char *input)
 	int length = strlen(final);
 	//printf("%c\n",final[length-1]);
 	//printf("Final: %s\n",final);
-	
-	final[length-1]=0;
+	printf("Length:  %d Potential invalid write if this is greater than 200!\n",length);
+	if (length!=0)
+	{
+		final[length-1]=0;
+	}
 	//printf("Final2: %s\n",final);
 	//printf("This is the string of variables found, with duplicates removed: %s\n",final);
 	
@@ -1048,21 +1097,56 @@ char* TSTPToString(Clause_p clause)
 
 void addFormulaToState(char* fname, ProofState_p state) 
 {
-
+	printf("addFormulaToState");
 	Scanner_p in;
 	StrTree_p skip_includes = NULL;
+	FormulaSet_p tempformulas = FormulaSetAlloc();
+	FormulaSet_p archive = FormulaSetAlloc();
+	ClauseSet_p garbage = ClauseSetAlloc();
+	ClauseSet_p final = ClauseSetAlloc();
+	printf("TBAlloc");
+	TB_p tempterms = TBAlloc(state->signature);
+
 	in = CreateScanner(StreamTypeFile,fname,true,NULL);
 	IOFormat format = TSTPFormat;
 	ScannerSetFormat(in, format);
-	//printf("\nHow many axioms are in state? %ld\n",state->axioms->members);
+	printf("FormulaAndClauseSetParse");
+	FormulaAndClauseSetParse(in,
+						   tempformulas,
+						   garbage,
+						   state->terms,
+						   NULL,
+						   &skip_includes);
+						   
+	long res;
+	
+	//FILE *fd = fopen("sanitycheck.txt","ab+");
+	//SigPrint(fd,state->terms->sig);
+	//fclose(fd);
+	//remove("sanitycheck.txt");
+	
+	printf("FormulaSetCNF");
+	res = FormulaSetCNF(tempformulas,
+							archive,
+							final,
+							state->terms,
+							state->freshvars,
+							state->gc_terms);
+	
+	/*
     FormulaAndClauseSetParse(in,
                                state->f_axioms,
                                state->watchlist,
                                state->terms,
                                NULL,
                                &skip_includes);
-    CheckInpTok(in, NoToken);
+    */
+    //CheckInpTok(in, NoToken);
     DestroyScanner(in);
+    FormulaSetFree(tempformulas);
+    ClauseSetFree(garbage);
+    TBFree(tempterms);
+    /*
 	//  Lets check if the dumpster is on fire
 	
 	//FILE *fd = fopen("sanitycheck.txt","ab+");
@@ -1075,6 +1159,7 @@ void addFormulaToState(char* fname, ProofState_p state)
                                state->freshvars,
                                state->gc_terms);
     //ClauseSetTSTPPrint(fd,state->axioms,true);
+    */
 }
 
 
@@ -1096,39 +1181,39 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
               with_set, ClauseSet_p store, VarBank_p
               freshvars, ParamodulationType pm_type, ProofState_p state) 
 {
-	
 	char *formula = TSTPToString(clause);
-	char *input_axiom;
 	char *replacement;
-	
-	input_axiom = replace_str(formula,"plain","axiom");
-	
-	char *test = FreeVariables(clause);
-	
-	//printf(input_axiom);
-	
+	replacement = Replacement(formula);
+	printf("This is our formula: %s\n",formula);
 	free(formula);
-	free(test);
-	
 	char *fname = "processedclauses.txt";
 	FILE *fc = fopen(fname, "ab+");
-	fprintf(fc,"%s\n",input_axiom);
+	fprintf(fc,"%s\n",replacement);
 	fclose(fc);
-	
-	addFormulaToState(fname,state);
-	
-	replacement = Replacement(input_axiom);
-	printf("This is the replacement instance: %s\n",replacement);
-	//free(input_axiom);
-	
-	//printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
-	
+	if (replacement != NULL) 
+	{
+		printf("This is our replacement instance: %s\n",replacement);
+		addFormulaToState(fname,state);
+	}
+	else
+	{
+		printf("\nNot valid for replacement!");
+	}
+
+	free(replacement);
+
+	printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
+
 	remove("processedclauses.txt");
 	remove("currentformula.txt");
 	//printf("\nleaving method\n");
 	return 1;
 	
 }
+
+
+
+
 
 /*-----------------------------------------------------------------------
 //
