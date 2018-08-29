@@ -47,8 +47,28 @@ char* FOFFreeVariables(char *input);
 char* FreeVariables(Clause_p clause);
 void addFormulaToState(char* fname, ProofState_p state);
 int count_characters(const char *str, char character);
-char* Replacement(char *input);
+char* Replacement(char *input, int whichrep);
 char* NewVariables(char *inp);
+char* Rep0 (char *var0,
+			char *var1,
+			char *var2,
+			char *var3,
+			char *var4,
+			char *var5,
+			char *var6,
+			char *strippedformula,
+			char *identifier
+			);
+char* Rep1 (char *var0,
+			char *var1,
+			char *var2,
+			char *var3,
+			char *var4,
+			char *var5,
+			char *var6,
+			char *strippedformula,
+			char *identifier
+			);
 
 /*---------------------------------------------------------------------*/
 /*                         Internal Functions                          */
@@ -606,6 +626,83 @@ bool upperCase(char c)
  * 
 */
 
+char* Rep0 (char *var0,
+			char *var1,
+			char *var2,
+			char *var3,
+			char *var4,
+			char *var5,
+			char *var6,
+			char *strippedformula,
+			char *identifier
+			)
+{
+	char *replacement = calloc(1000,sizeof(char));
+	strcat(replacement,"![");
+	strcat(replacement,var0);
+	strcat(replacement,"]:?[");
+	strcat(replacement,var1);
+	strcat(replacement,"]:![");
+	strcat(replacement,var2);
+	strcat(replacement,"]:(");
+	char *phiv0v2 = strippedformula;
+	while (strstr(phiv0v2,var1))
+	{
+		phiv0v2 = replace_str(phiv0v2,var1,var2);
+	}
+	strcat(replacement,phiv0v2);
+	strcat(replacement,"<=>(");
+	strcat(replacement,var2);
+	strcat(replacement,"=");
+	strcat(replacement,var1);
+	strcat(replacement,"))=>(![");
+	// here begins the conclusion (and preceding line)
+	strcat(replacement,var3);
+	strcat(replacement,"]:?[");
+	strcat(replacement,var4);
+	strcat(replacement,"]:![");
+	strcat(replacement,var5);
+	strcat(replacement,"]:(member(");
+	strcat(replacement,var5);
+	strcat(replacement,",");
+	strcat(replacement,var4);
+	strcat(replacement,")<=>?[");
+	strcat(replacement,var6);
+	strcat(replacement,"]:(member(");
+	strcat(replacement,var6);
+	strcat(replacement,",");
+	strcat(replacement,var3);
+	strcat(replacement,")&");
+	char *phiv6v5 = strippedformula;
+	while (strstr(phiv6v5,var0))
+	{
+		phiv6v5 = replace_str(phiv6v5,var0,var6);
+	}
+	while (strstr(phiv6v5,var1))
+	{
+		phiv6v5 = replace_str(phiv6v5,var1,var5);
+	}
+	//printf("\n\nThis is the phi with variables replaced for second part: %s\n\n", phiv6v5);
+	strcat(replacement,phiv6v5);
+	strcat(replacement,")))).");
+	
+	char *fof;
+	fof = calloc(1100,sizeof(char));
+	strcat(fof,"fof(rpm");
+	strcat(fof,identifier);
+	strcat(fof,",axiom,");
+	strcat(fof,replacement);
+	free(replacement);
+	return fof;
+}
+
+/*
+ *  Replacement instace for phi(y,x)
+ * 
+ *  John Hester
+ * 
+*/
+
 char* Rep1 (char *var0,
 			char *var1,
 			char *var2,
@@ -614,17 +711,71 @@ char* Rep1 (char *var0,
 			char *var5,
 			char *var6,
 			char *strippedformula,
-			char *identifier,
+			char *identifier
 			)
-
-/*
- *  Replacement instace for phi(x,y)
- * 
- *  John Hester
- * 
-*/
-
-//char* Rep2 (char *var0,)
+{
+	char *replacement = calloc(1000,sizeof(char));
+	strcat(replacement,"![");
+	strcat(replacement,var0);
+	strcat(replacement,"]:?[");
+	strcat(replacement,var1);
+	strcat(replacement,"]:![");
+	strcat(replacement,var2);
+	strcat(replacement,"]:(");
+	char *phiv2v0 = strippedformula;
+	while (strstr(phiv2v0,var0))
+	{
+		phiv2v0 = replace_str(phiv2v0,var0,var2);
+	}
+	while (strstr(phiv2v0,var1))
+	{
+		phiv2v0 = replace_str(phiv2v0,var1,var0);
+	}
+	strcat(replacement,phiv2v0);
+	strcat(replacement,"<=>(");
+	strcat(replacement,var2);
+	strcat(replacement,"=");
+	strcat(replacement,var1);
+	strcat(replacement,"))=>(![");
+	// here begins the conclusion (and preceding line)
+	strcat(replacement,var3);
+	strcat(replacement,"]:?[");
+	strcat(replacement,var4);
+	strcat(replacement,"]:![");
+	strcat(replacement,var5);
+	strcat(replacement,"]:(member(");
+	strcat(replacement,var5);
+	strcat(replacement,",");
+	strcat(replacement,var4);
+	strcat(replacement,")<=>?[");
+	strcat(replacement,var6);
+	strcat(replacement,"]:(member(");
+	strcat(replacement,var6);
+	strcat(replacement,",");
+	strcat(replacement,var3);
+	strcat(replacement,")&");
+	char *phiv5v6 = strippedformula;
+	while (strstr(phiv5v6,var0))
+	{
+		phiv5v6 = replace_str(phiv5v6,var0,var5);
+	}
+	while (strstr(phiv5v6,var1))
+	{
+		phiv5v6 = replace_str(phiv5v6,var1,var6);
+	}
+	//printf("\n\nThis is the phi with variables replaced for second part: %s\n\n", phiv6v5);
+	strcat(replacement,phiv5v6);
+	strcat(replacement,")))).");
+	
+	char *fof;
+	fof = calloc(1100,sizeof(char));
+	strcat(fof,"fof(rpm");
+	strcat(fof,identifier);
+	strcat(fof,",axiom,");
+	strcat(fof,replacement);
+	free(replacement);
+	return fof;
+}
 
 /* John Hester
  * 
@@ -646,11 +797,12 @@ bool integer(char c)
  *  Returns null if the inference is not possible, else returns the REPL0 string
  *  Only works for variables with one following integer
  * CURRENTLY ONLY WORKS WITH CNF
+ * whichrep determines to do replacement for phi(x,y) or phi(y,x)
  *  John Hester
  * 
 */
 
-char* Replacement(char *input) 
+char* Replacement(char *input, int whichrep) 
 {
 	
 	char *variables = CNFFreeVariables(input);
@@ -731,71 +883,19 @@ char* Replacement(char *input)
 	
 	free(newvariables);
 	free(variables);
-	
-	//printf("Var4: %c + %c = %s\n",c4,d4,var4);
-	//now actually build the replacement inference
-	
-	char *replacement = calloc(1000,sizeof(char));
-	strcat(replacement,"![");
-	strcat(replacement,var0);
-	strcat(replacement,"]:?[");
-	strcat(replacement,var1);
-	strcat(replacement,"]:![");
-	strcat(replacement,var2);
-	strcat(replacement,"]:(");
-	char *phiv0v2 = strippedformula;
-	while (strstr(phiv0v2,var1))
-	{
-		phiv0v2 = replace_str(phiv0v2,var1,var2);
-	}
-	strcat(replacement,phiv0v2);
-	strcat(replacement,"<=>(");
-	strcat(replacement,var2);
-	strcat(replacement,"=");
-	strcat(replacement,var1);
-	strcat(replacement,"))=>(![");
-	// here begins the conclusion (and preceding line)
-	strcat(replacement,var3);
-	strcat(replacement,"]:?[");
-	strcat(replacement,var4);
-	strcat(replacement,"]:![");
-	strcat(replacement,var5);
-	strcat(replacement,"]:(member(");
-	strcat(replacement,var5);
-	strcat(replacement,",");
-	strcat(replacement,var4);
-	strcat(replacement,")<=>?[");
-	strcat(replacement,var6);
-	strcat(replacement,"]:(member(");
-	strcat(replacement,var6);
-	strcat(replacement,",");
-	strcat(replacement,var3);
-	strcat(replacement,")&");
-	char *phiv6v5 = strippedformula;
-	while (strstr(phiv6v5,var0))
-	{
-		phiv6v5 = replace_str(phiv6v5,var0,var6);
-	}
-	while (strstr(phiv6v5,var1))
-	{
-		phiv6v5 = replace_str(phiv6v5,var1,var5);
-	}
-	//printf("\n\nThis is the phi with variables replaced for second part: %s\n\n", phiv6v5);
-	strcat(replacement,phiv6v5);
-	strcat(replacement,")))).");
-	
 	char *fof;
-	fof = calloc(1100,sizeof(char));
-	strcat(fof,"fof(rpm");
-	strcat(fof,identifier);
-	strcat(fof,",axiom,");
-	strcat(fof,replacement);
-	//printf("\nVaribles: 0:%s, 1:%s, 2:%s, 3:%s, 4:%s, 5:%s, 6:%s\n",var0,var1,var2,var3,var4,var5,var6);
-	//printf("\n\nThis is the phi that was used for replacement:  %s\n\n",strippedformula);
-	//printf("\n\nReplacement check!  Did we do the proper substitutions?  %s\n\n",replacement);
+	
+	if (whichrep == 0)
+	{
+		fof = Rep0(var0,var1,var2,var3,var4,var5,var6,strippedformula,identifier);
+	}
+	else
+	{
+		fof = Rep1(var0,var1,var2,var3,var4,var5,var6,strippedformula,identifier);
+	}
+	
 	
 	free(strippedformula);
-	free(replacement);
 	free(identifier);
 	
 	return fof;
@@ -1200,17 +1300,19 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
               freshvars, ParamodulationType pm_type, ProofState_p state) 
 {
 	char *formula = TSTPToString(clause);
-	char *replacement;
-	replacement = Replacement(formula);
+	char *replacement0;
+	replacement0 = Replacement(formula,0);
+	char *replacement1;
+	replacement1 = Replacement(formula,1);
 	//printf("This is our formula: %s\n",formula);
 	free(formula);
 	char *fname = "processedclauses.txt";
 	FILE *fc = fopen(fname, "ab+");
-	fprintf(fc,"%s\n",replacement);
+	fprintf(fc,"%s\n",replacement0);
 	fclose(fc);
-	if (replacement != NULL) 
+	if (replacement0 != NULL) 
 	{
-		printf("\nThis is our replacement instance: %s\n",replacement);
+		//printf("\nThis is our replacement instance: %s\n",replacement);
 		addFormulaToState(fname,state);
 	}
 	else
@@ -1218,12 +1320,26 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 		printf("\nNot valid for replacement!");
 	}
 
-	free(replacement);
-
-	printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
-
+	free(replacement0);
 	remove("processedclauses.txt");
+	fc = fopen(fname, "ab+");
+	fprintf(fc,"%s\n",replacement1);
+	
+	if (replacement1 != NULL) 
+	{
+		//printf("\nThis is our replacement instance: %s\n",replacement);
+		addFormulaToState(fname,state);
+	}
+	else
+	{
+		printf("\nNot valid for replacement!");
+	}
+	
+	free(replacement1);
+	//printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
+	
 	remove("currentformula.txt");
+	remove("processedclauses.txt");
 	//printf("\nleaving method\n");
 	return 1;
 	
