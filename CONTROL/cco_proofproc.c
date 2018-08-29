@@ -599,6 +599,33 @@ bool upperCase(char c)
 	return false;
 }
 
+/*
+ *  Replacement instace for phi(x,y)
+ * 
+ *  John Hester
+ * 
+*/
+
+char* Rep1 (char *var0,
+			char *var1,
+			char *var2,
+			char *var3,
+			char *var4,
+			char *var5,
+			char *var6,
+			char *strippedformula,
+			char *identifier,
+			)
+
+/*
+ *  Replacement instace for phi(x,y)
+ * 
+ *  John Hester
+ * 
+*/
+
+//char* Rep2 (char *var0,)
+
 /* John Hester
  * 
  * Check if character is integer...
@@ -618,6 +645,7 @@ bool integer(char c)
  *  First checks if the input has exactly two free variables, then builds it
  *  Returns null if the inference is not possible, else returns the REPL0 string
  *  Only works for variables with one following integer
+ * CURRENTLY ONLY WORKS WITH CNF
  *  John Hester
  * 
 */
@@ -673,7 +701,7 @@ char* Replacement(char *input)
 	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
 	//printf("\nThis is its identifier: %s\n", identifier);
 	
-	//printf("\nThis is the stripped version: %s\n", strippedformula);
+	//printf("\n\nThis is the stripped phi: %s\n\n", strippedformula);
 	
 	//  List out the variables
 	
@@ -707,7 +735,7 @@ char* Replacement(char *input)
 	//printf("Var4: %c + %c = %s\n",c4,d4,var4);
 	//now actually build the replacement inference
 	
-	char *replacement = calloc(500,sizeof(char));
+	char *replacement = calloc(1000,sizeof(char));
 	strcat(replacement,"![");
 	strcat(replacement,var0);
 	strcat(replacement,"]:?[");
@@ -715,14 +743,18 @@ char* Replacement(char *input)
 	strcat(replacement,"]:![");
 	strcat(replacement,var2);
 	strcat(replacement,"]:(");
-	char *phiv0v2;
-	phiv0v2 = replace_str(strippedformula,var1,var2);
+	char *phiv0v2 = strippedformula;
+	while (strstr(phiv0v2,var1))
+	{
+		phiv0v2 = replace_str(phiv0v2,var1,var2);
+	}
 	strcat(replacement,phiv0v2);
 	strcat(replacement,"<=>(");
 	strcat(replacement,var2);
 	strcat(replacement,"=");
 	strcat(replacement,var1);
 	strcat(replacement,"))=>(![");
+	// here begins the conclusion (and preceding line)
 	strcat(replacement,var3);
 	strcat(replacement,"]:?[");
 	strcat(replacement,var4);
@@ -739,18 +771,28 @@ char* Replacement(char *input)
 	strcat(replacement,",");
 	strcat(replacement,var3);
 	strcat(replacement,")&");
-	char *phiv6v5;
-	phiv6v5 = replace_str(strippedformula,var0,var6);
-	phiv6v5 = replace_str(strippedformula,var1,var5);
+	char *phiv6v5 = strippedformula;
+	while (strstr(phiv6v5,var0))
+	{
+		phiv6v5 = replace_str(phiv6v5,var0,var6);
+	}
+	while (strstr(phiv6v5,var1))
+	{
+		phiv6v5 = replace_str(phiv6v5,var1,var5);
+	}
+	//printf("\n\nThis is the phi with variables replaced for second part: %s\n\n", phiv6v5);
 	strcat(replacement,phiv6v5);
 	strcat(replacement,")))).");
 	
 	char *fof;
-	fof = calloc(500,sizeof(char));
+	fof = calloc(1100,sizeof(char));
 	strcat(fof,"fof(rpm");
 	strcat(fof,identifier);
 	strcat(fof,",axiom,");
 	strcat(fof,replacement);
+	//printf("\nVaribles: 0:%s, 1:%s, 2:%s, 3:%s, 4:%s, 5:%s, 6:%s\n",var0,var1,var2,var3,var4,var5,var6);
+	//printf("\n\nThis is the phi that was used for replacement:  %s\n\n",strippedformula);
+	//printf("\n\nReplacement check!  Did we do the proper substitutions?  %s\n\n",replacement);
 	
 	free(strippedformula);
 	free(replacement);
@@ -1097,69 +1139,45 @@ char* TSTPToString(Clause_p clause)
 
 void addFormulaToState(char* fname, ProofState_p state) 
 {
-	printf("addFormulaToState");
+	printf("\n\naddFormulaToState\n\n");
 	Scanner_p in;
 	StrTree_p skip_includes = NULL;
 	FormulaSet_p tempformulas = FormulaSetAlloc();
-	FormulaSet_p archive = FormulaSetAlloc();
-	ClauseSet_p garbage = ClauseSetAlloc();
+	//FormulaSet_p archive = FormulaSetAlloc();
+	//ClauseSet_p garbage = ClauseSetAlloc();
 	ClauseSet_p final = ClauseSetAlloc();
-	printf("TBAlloc");
-	TB_p tempterms = TBAlloc(state->signature);
+	WFormula_p form;
+	//FormulaProperties axiomtype = CPTypeAxiom;
+	long res;
+	
+	//printf("\nThis is the file we're looking for the formula in: %s\n",fname);
+	//TB_p tempterms = TBAlloc(state->signature);
 
 	in = CreateScanner(StreamTypeFile,fname,true,NULL);
 	IOFormat format = TSTPFormat;
 	ScannerSetFormat(in, format);
 	printf("FormulaAndClauseSetParse");
-	FormulaAndClauseSetParse(in,
-						   tempformulas,
-						   garbage,
-						   state->terms,
-						   NULL,
-						   &skip_includes);
+	if(TestInpId(in, "input_formula|fof|tff|tcf"))
+	   {
+		  printf("\nparse\n");
+		  form = WFormulaParse(in, state->terms);
+		  fprintf(stdout, "Parsed: ");
+		  WFormulaPrint(stdout, form, true);
+		  fprintf(stdout, "\n");
+		  res = WFormulaCNF(form,final,state->terms,state->freshvars);
+	   }
 						   
-	long res;
-	
-	//FILE *fd = fopen("sanitycheck.txt","ab+");
-	//SigPrint(fd,state->terms->sig);
-	//fclose(fd);
-	//remove("sanitycheck.txt");
-	
-	printf("FormulaSetCNF");
-	res = FormulaSetCNF(tempformulas,
-							archive,
-							final,
-							state->terms,
-							state->freshvars,
-							state->gc_terms);
-	
-	/*
-    FormulaAndClauseSetParse(in,
-                               state->f_axioms,
-                               state->watchlist,
-                               state->terms,
-                               NULL,
-                               &skip_includes);
-    */
-    //CheckInpTok(in, NoToken);
+    //FormulaSetInsert(state->f_axioms,form);
+	printf("\nNUMBER OF FORMULAS THAT WERE PRODUCED BY REPLACEMENT: %ld\n",tempformulas->members);
+	printf("\nNUMBER OF CLAUSES THAT WERE PRODUCED BY REPLACEMENT: %ld\n",final->members);
+	ClauseSetInsertSet(state->tmp_store,final);
+	//ClauseSetInsertSet(state->axioms,final);
     DestroyScanner(in);
     FormulaSetFree(tempformulas);
-    ClauseSetFree(garbage);
-    TBFree(tempterms);
-    /*
-	//  Lets check if the dumpster is on fire
-	
-	//FILE *fd = fopen("sanitycheck.txt","ab+");
-	
-	long cnf_size;
-    cnf_size = FormulaSetCNF(state->f_axioms,
-                               state->f_ax_archive,
-                               state->axioms,
-                               state->terms,
-                               state->freshvars,
-                               state->gc_terms);
-    //ClauseSetTSTPPrint(fd,state->axioms,true);
-    */
+    //FormulaSetFree(archive);
+    //ClauseSetFree(garbage);
+    ClauseSetFree(final);
+    //TBFree(tempterms);
 }
 
 
@@ -1184,7 +1202,7 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	char *formula = TSTPToString(clause);
 	char *replacement;
 	replacement = Replacement(formula);
-	printf("This is our formula: %s\n",formula);
+	//printf("This is our formula: %s\n",formula);
 	free(formula);
 	char *fname = "processedclauses.txt";
 	FILE *fc = fopen(fname, "ab+");
@@ -1192,7 +1210,7 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	fclose(fc);
 	if (replacement != NULL) 
 	{
-		printf("This is our replacement instance: %s\n",replacement);
+		printf("\nThis is our replacement instance: %s\n",replacement);
 		addFormulaToState(fname,state);
 	}
 	else
