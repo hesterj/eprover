@@ -1561,6 +1561,7 @@ void ClauseTSTPPrint(FILE* out, Clause_p clause, bool fullterms, bool complete)
    }
    else
    {
+	  //printf("\n\n Clause->ident<0?\n\n");
       fprintf(out, "%s(i_%d_%ld, ",
               kind,
               source,
