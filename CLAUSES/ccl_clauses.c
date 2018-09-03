@@ -1605,6 +1605,7 @@ void ClauseTSTPPrint(FILE* out, Clause_p clause, bool fullterms, bool complete)
 /*
 char* StringClauseTSTPPrint(Clause_p clause, bool fullterms, bool complete)
 {
+   char *out = NULL;
    int source;
    char *typename = "plain", *kind = "cnf";
    bool is_untyped = ClauseIsUntyped(clause);

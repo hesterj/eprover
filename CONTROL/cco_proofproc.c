@@ -955,7 +955,7 @@ char* Replacement(char *input, int whichrep)
 /*  Returns a comma separated string of the FREE variables of a FOF expression
  *  Only call if it's FOF!!!
  * 
- *  DEPRECATED!!!! DO NOT USED UNTIL STRCAT REPLACED WITH append
+ *  DEPRECATED!!!!  COPY THE CNF VERSION WITH NECESSARY FOF CHANGES
  * 
  * 
 */
@@ -1382,7 +1382,7 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	remove("processedclauses.txt");
 	fc = fopen(fname, "ab+");
 	fprintf(fc,"%s\n",replacement1);
-	
+	fclose(fc);
 	if (replacement1 != NULL) 
 	{
 		//printf("\nThis is our replacement instance: %s\n",replacement);
