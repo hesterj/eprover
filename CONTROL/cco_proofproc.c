@@ -832,7 +832,11 @@ char* Replacement(char *input, int whichrep)
 	
 	printf("\nThis is our list of variables: %s\n",variables);
 	
-	if (!variables) return NULL;  // make sure we actually have some variables...
+	if (!variables) 
+	{
+		free(variables);
+		return NULL;  // make sure we actually have some variables...
+	}
 	char *newvariables;
 	//char *strippedformula = calloc(strlen(input),sizeof(char));
 	//char *identifier = calloc(50,sizeof(char));
@@ -844,6 +848,7 @@ char* Replacement(char *input, int whichrep)
 	
 	if (count != 1) 
 	{
+		free(variables);
 		return NULL;
 	}
 	//Now we need to remove the identifiers from the formula
@@ -1150,11 +1155,12 @@ char* CNFFreeVariables(char *input)
 	{
 		if (strstr(final,token) == 0)
 		{
-			char *p = ",";
+			//char p[2] = ",";
 			//strcat(final,token);
 			//strcat(final,p);
-			append(&final,token,1);
-			append(&final,p,1);
+			int strlentoken = strlen(token);
+			append(&final,token,strlentoken);
+			append(&final,s,1);
 		}
 		//printf( " %s\n", token );
 		token = strtok(NULL, s);
@@ -1167,7 +1173,7 @@ char* CNFFreeVariables(char *input)
 	}
 	//printf("%c\n",final[length-1]);
 	//printf("Final: %s\n",final);
-	printf("Length:  %d Potential invalid write if this is greater than 200!\n",length);
+	//printf("Length:  %d Potential invalid write if this is greater than 200!\n",length);
 	if (length!=0)
 	{
 		final[length-1]=0;

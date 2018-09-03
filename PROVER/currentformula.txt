@@ -1,1 +1,0 @@
-cnf(i_0_94, plain, (~member(Y1,image(Y2,null_class)))).
