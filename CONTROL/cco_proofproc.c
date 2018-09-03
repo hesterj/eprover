@@ -34,7 +34,7 @@ PERF_CTR_DEFINE(BWRWTimer);
 /*---------------------------------------------------------------------*/
 /*                      Forward Declarations                           */
 /*---------------------------------------------------------------------*/
-
+static int append(char **str, const char *buf, int size);
 bool upperCase(char c);
 bool integer(char c);
 char* TSTPToString(Clause_p clause);
@@ -529,6 +529,29 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
    // printf("# ...simplify_watchlist()\n");
 }
 
+/* String append method to preserve sanity
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+*/
+static int append(char **str, const char *buf, int size) {
+  char *nstr;
+  if (*str == NULL) {
+    nstr = malloc(size + 1);
+    memcpy(nstr, buf, size);
+    nstr[size] = '\0';
+  }
+  else {
+    if (asprintf(&nstr, "%s%.*s", *str, size, buf) == -1) return -1;
+    free(*str);
+  }
+  *str = nstr;
+  return 0;
+}
+
 /*  Returns FIVE new TPTP variables not occuring in the given list of TWO variables
  * 
  *  John Hester
@@ -806,9 +829,17 @@ char* Replacement(char *input, int whichrep)
 {
 	
 	char *variables = CNFFreeVariables(input);
+	
+	printf("\nThis is our list of variables: %s\n",variables);
+	
+	if (!variables) return NULL;  // make sure we actually have some variables...
 	char *newvariables;
-	char *strippedformula = calloc(strlen(input),sizeof(char));
-	char *identifier = calloc(50,sizeof(char));
+	//char *strippedformula = calloc(strlen(input),sizeof(char));
+	//char *identifier = calloc(50,sizeof(char));
+	char *strippedformula = NULL;
+	char *identifier = NULL;
+	//char *strippedformula;
+	//char *identifier;
 	int count = count_characters(variables, ',');
 	
 	if (count != 1) 
@@ -819,7 +850,8 @@ char* Replacement(char *input, int whichrep)
 	int length = strlen(input);
 	int commacount = 0;
 	int parencount = 0;
-	
+	//int identlen = 0;
+	//int striplen = 0;
 	//printf("Length: %d\n",length);
 	//printf("\nThis is the formula we're doing a replacement instance of: %s\n\n", input);
 	
@@ -839,18 +871,30 @@ char* Replacement(char *input, int whichrep)
 		if (parencount == 1 && commacount == 0)
 		{
 			char temp[2] = {input[i]};
-			strcat(identifier,temp);
+			append(&identifier,temp,1);
+			//identifier = strcat(identifier,temp);
+			//asprintf(&identifier,temp);
+			//asprintf(&identifier,"%s%s",strippedformula,temp);
+			//identlen+=1;
 			
 		}
 		if (commacount > 1)
 		{
 			if (input[i] == '.') break;
 			char temp[2] = {input[i]};
-			strcat(strippedformula,temp);
+			append(&strippedformula,temp,1);
+			//strippedformula = strcat(strippedformula,temp);
+			//asprintf(&strippedformula,"%s%s",strippedformula,temp);
+			//striplen+=1;
 		}
 	}
+	//asprintf(&strippedformula,"%s%c",strippedformula,'\0');
+	//asprintf(&identifier,"%s%c",strippedformula,'\0');
 	int lenstrip = strlen(strippedformula);
 	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
+	
+	printf("\IDENTIFIER: %s\n", identifier);
+	printf("\STRIPPEDFORMULA: %s\n", strippedformula);
 	//printf("\nThis is its identifier: %s\n", identifier);
 	
 	//printf("\n\nThis is the stripped phi: %s\n\n", strippedformula);
@@ -898,6 +942,7 @@ char* Replacement(char *input, int whichrep)
 	free(strippedformula);
 	free(identifier);
 	
+	//return input;
 	return fof;
 }
 
@@ -905,7 +950,7 @@ char* Replacement(char *input, int whichrep)
 /*  Returns a comma separated string of the FREE variables of a FOF expression
  *  Only call if it's FOF!!!
  * 
- * 
+ *  DEPRECATED!!!! DO NOT USED UNTIL STRCAT REPLACED WITH append
  * 
  * 
 */
@@ -985,7 +1030,8 @@ char* FOFFreeVariables(char *input)
 	
 	////////////////////////////////////////////////
 	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
-	char *final = malloc(sizeof(char) * 100);
+	//char *final = malloc(sizeof(char) * 100);
+	char *final = NULL;
 	
 	const char s[2] = ",";
 	char *token;
@@ -1094,7 +1140,7 @@ char* CNFFreeVariables(char *input)
 	////////////////////////////////////////////////
 	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
 	char *final = calloc(200, sizeof(char));
-	
+	//char *final = NULL;
 	const char s[2] = ",";
 	char *token;
     token = strtok(output, s);
@@ -1105,14 +1151,20 @@ char* CNFFreeVariables(char *input)
 		if (strstr(final,token) == 0)
 		{
 			char *p = ",";
-			strcat(final,token);
-			strcat(final,p);
+			//strcat(final,token);
+			//strcat(final,p);
+			append(&final,token,1);
+			append(&final,p,1);
 		}
 		//printf( " %s\n", token );
 		token = strtok(NULL, s);
 	}
 	//  null terminate the string to be safe
-	int length = strlen(final);
+	int length = 0;
+	if(final)
+	{
+		length = strlen(final);
+	}
 	//printf("%c\n",final[length-1]);
 	//printf("Final: %s\n",final);
 	printf("Length:  %d Potential invalid write if this is greater than 200!\n",length);
