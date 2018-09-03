@@ -1589,6 +1589,96 @@ void ClauseTSTPPrint(FILE* out, Clause_p clause, bool fullterms, bool complete)
    }
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: StringClauseTSTPPrint()
+//
+//   Returns a clause in TSTP format, as a string. If complete is true, terminate
+//   clause properly, otherwise stop after the logical part.
+//
+// Global Variables: -
+//
+// Side Effects    : Make sure to free the string produced by this
+//
+/----------------------------------------------------------------------*/
+/*
+char* StringClauseTSTPPrint(Clause_p clause, bool fullterms, bool complete)
+{
+   int source;
+   char *typename = "plain", *kind = "cnf";
+   bool is_untyped = ClauseIsUntyped(clause);
+   TFormula_p form = NULL;
+
+   // quantify and print as TFF formula
+   if(!is_untyped)
+   {
+      kind = "tcf";
+   }
+
+   switch(ClauseQueryTPTPType(clause))
+   {
+   case CPTypeAxiom:
+         if(ClauseQueryProp(clause, CPInputFormula))
+         {
+            typename = "axiom";
+         }
+         break;
+   case CPTypeHypothesis:
+         typename = "hypothesis";
+         break;
+   case CPTypeConjecture:
+         typename = "conjecture";
+         break;
+   case CPTypeLemma:
+         typename = "lemma";
+         break;
+   case CPTypeWatchClause:
+         typename = "watchlist";
+         break;
+   case CPTypeNegConjecture:
+         typename = "negated_conjecture";
+         break;
+   default:
+         break;
+   }
+   source = ClauseQueryCSSCPASource(clause);
+   if(clause->ident >= 0)
+   {
+      fprintf(out, "%s(c_%d_%ld, ",
+              kind,
+              source,
+              clause->ident);
+   }
+   else
+   {
+      fprintf(out, "%s(i_%d_%ld, ",
+              kind,
+              source,
+              clause->ident-LONG_MIN);
+   }
+   fprintf(out, "%s, ", typename);
+
+   if(is_untyped)
+   {
+      ClauseTSTPCorePrint(out, clause, fullterms);
+   }
+   else
+   {
+      // Print as universally quantified formula
+      assert(clause->literals);
+      form = TFormulaClauseEncode(clause->literals->bank, clause);
+      form = TFormulaClosure(clause->literals->bank, form, true);
+
+      TFormulaTPTPPrint(out, clause->literals->bank, form, fullterms, false);
+      // handled by GC, no need to free
+   }
+
+   if(complete)
+   {
+      fprintf(out, ").");
+   }
+}
+*/
 
 /*-----------------------------------------------------------------------
 //

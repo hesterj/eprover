@@ -314,7 +314,7 @@ void     ClausePCLPrint(FILE* out, Clause_p clause, bool fullterms);
 void     ClauseTSTPCorePrint(FILE* out, Clause_p clause, bool fullterms);
 void     ClauseTSTPPrint(FILE* out, Clause_p clause, bool fullterms,
                          bool complete);
-
+//char* StringClauseTSTPPrint(Clause_p clause, bool fullterms, bool complete);
 bool              ClauseStartsMaybe(Scanner_p in);
 FormulaProperties ClauseTypeParse(Scanner_p in, char *legal_types);
 Clause_p          ClauseParse(Scanner_p in, TB_p bank);
