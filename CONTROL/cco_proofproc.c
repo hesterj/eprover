@@ -48,7 +48,7 @@ char* FreeVariables(Clause_p clause);
 void addFormulaToState(char* fname, ProofState_p state);
 int count_characters(const char *str, char character);
 char* Replacement(char *input, int whichrep);
-char* NewVariables(char *inp);
+char* NewVariables(char *inp, int reporspec);
 char* Rep0 (char *var0,
 			char *var1,
 			char *var2,
@@ -69,6 +69,7 @@ char* Rep1 (char *var0,
 			char *strippedformula,
 			char *identifier
 			);
+char* Comprehension(char *input);
 
 /*---------------------------------------------------------------------*/
 /*                         Internal Functions                          */
@@ -552,37 +553,67 @@ static int append(char **str, const char *buf, int size) {
   return 0;
 }
 
-/*  Returns FIVE new TPTP variables not occuring in the given list of TWO variables
+/*  Returns a number of new variables depending on the input list.  The new variables are distinct from the input
+ *  Number returned is FIVE with TWO inputs in the case of replacement
+ *  Number returned is TWO with ONE input in the case of specification
  * 
+ * reporspec = 0 is the replacement case, 1 is specification case
  *  John Hester
  * 
  * 
  * 
 */
 
-char *NewVariables(char *variables)
+char *NewVariables(char *variables, int reporspec)
 {
-	char *newvars = calloc(200, sizeof(char));
-	char d;
-	//printf("\nTwo free variables!\n");
-	char c1 = variables[0];
-	char c2 = variables[3];
-	for (int i =65;i<91;i++)
+	//  Replacement case
+	if (reporspec == 0) 
 	{
-		if (i != c1 && i != c2)
+		char *newvars = calloc(200, sizeof(char));
+		char d;
+		//printf("\nTwo free variables!\n");
+		char c1 = variables[0];
+		char c2 = variables[3];
+		for (int i =65;i<91;i++)
 		{
-			//printf("%c\n",i);
-			d = i;
-			break;
+			if (i != c1 && i != c2)
+			{
+				//printf("%c\n",i);
+				d = i;
+				break;
+			}
 		}
+		for (int i=48;i<53;i++)
+		{
+			char temp[3] = {d,i,','};
+			strcat(newvars,temp);
+		}
+		newvars[14] = 0;
+		return newvars;
 	}
-	for (int i=48;i<53;i++)
+	//  Comprehension case
+	else if (reporspec == 1)
 	{
-		char temp[3] = {d,i,','};
-		strcat(newvars,temp);
+		char *newvars = calloc(200, sizeof(char));
+		char d;
+		char c1 = variables[0];
+		for (int i =65;i<91;i++)
+		{
+			if (i != c1)
+			{
+				d = i;
+				break;
+			}
+		}
+		for (int i=48;i<50;i++)
+		{
+			char temp[3] = {d,i,','};
+			strcat(newvars,temp);
+		}
+		newvars[5] = 0;
+		return newvars;
 	}
-	newvars[14] = 0;
-	return newvars;
+	else return NULL;
 }
 
 
@@ -705,7 +736,6 @@ char* Rep0 (char *var0,
 	{
 		phiv6v5 = replace_str(phiv6v5,var1,var5);
 	}
-	//printf("\n\nThis is the phi with variables replaced for second part: %s\n\n", phiv6v5);
 	strcat(replacement,phiv6v5);
 	strcat(replacement,")))).");
 	
@@ -744,7 +774,7 @@ char* Rep1 (char *var0,
 	strcat(replacement,var1);
 	strcat(replacement,"]:![");
 	strcat(replacement,var2);
-	strcat(replacement,"]:(");
+	strcat(replacement,"]:((");
 	char *phiv2v0 = strippedformula;
 	while (strstr(phiv2v0,var0))
 	{
@@ -755,7 +785,7 @@ char* Rep1 (char *var0,
 		phiv2v0 = replace_str(phiv2v0,var1,var0);
 	}
 	strcat(replacement,phiv2v0);
-	strcat(replacement,"<=>(");
+	strcat(replacement,")<=>(");
 	strcat(replacement,var2);
 	strcat(replacement,"=");
 	strcat(replacement,var1);
@@ -786,7 +816,6 @@ char* Rep1 (char *var0,
 	{
 		phiv5v6 = replace_str(phiv5v6,var1,var6);
 	}
-	//printf("\n\nThis is the phi with variables replaced for second part: %s\n\n", phiv6v5);
 	strcat(replacement,phiv5v6);
 	strcat(replacement,")))).");
 	
@@ -815,6 +844,123 @@ bool integer(char c)
 	return false;
 }
 
+/*  Actually creates the parameter-free comprehension instance
+ *  First checks if the input has exactly one free variables, then builds it
+ *  Returns null if the inference is not possible, else returns the string of the comprehension instance
+ *  Only works for variables with one following integer
+ * CURRENTLY ONLY WORKS WITH CNF
+ *  John Hester
+ * 
+ * If we get proofs:  investigate X!=B restriction in the note.  I think this is correct but not entirely certain.
+*/
+
+char* Comprehension(char *input) 
+{
+	
+	char *variables = CNFFreeVariables(input);
+	
+	printf("\nThis is our list of variables: %s\n",variables);
+	
+	if (!variables || variables[0] == '\0') 
+	{
+		free(variables);
+		printf("\nNo variables!\n");
+		return NULL;  // make sure we actually have some variables...
+	}
+	char *newvariables;
+	char *strippedformula = NULL;
+	char *identifier = NULL;
+	int count = count_characters(variables, ',');
+	
+	if (count != 0) 
+	{
+		free(variables);
+		return NULL;
+	}
+	//Now we need to remove the identifiers from the formula
+	int length = strlen(input);
+	int commacount = 0;
+	int parencount = 0;
+	
+	for (int i=0;i<length;i++)   //  separate the formula and the identifier
+	{		
+		if (input[i] == ',')
+		{ 
+			commacount += 1;
+			if (commacount == 2) continue;
+		}
+		if (input[i] == '(')
+		{
+			parencount += 1;
+			if (parencount == 1) continue;
+		}
+		
+		if (parencount == 1 && commacount == 0)
+		{
+			char temp[2] = {input[i]};
+			append(&identifier,temp,1);
+		}
+		if (commacount > 1)
+		{
+			if (input[i] == '.') break;
+			char temp[2] = {input[i]};
+			append(&strippedformula,temp,1);
+		}
+	}
+	int lenstrip = strlen(strippedformula);
+	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
+	
+	printf("\nCOMPREHENSION IDENTIFIER: %s\n", identifier);
+	printf("COMPREHENSION STRIPPEDFORMULA: %s\n", strippedformula);
+	
+	//  List out the variables
+	
+	newvariables = NewVariables(variables,1);
+	
+	char c0 = variables[0];
+	char c1 = newvariables[0];
+	char c2 = newvariables[3];
+	char d0 = variables[1];
+	char d1 = newvariables[1];
+	char d2 = newvariables[4];
+	char var0[3] = {c0,d0};
+	char var1[3] = {c1,d1};
+	char var2[3] = {c2,d2};
+	
+	free(newvariables);
+	free(variables);
+	char *fof;
+	
+	char *comprehension = calloc(1500,sizeof(char));
+	strcat(comprehension,"fof(cmp");
+	strcat(comprehension,identifier);
+	strcat(comprehension,",axiom,");
+	strcat(comprehension,"![");
+	strcat(comprehension,var1);
+	strcat(comprehension,"]:?[");
+	strcat(comprehension,var2);
+	strcat(comprehension,"]:![");
+	strcat(comprehension,var0);
+	strcat(comprehension,"]:(");
+	strcat(comprehension,"member(");
+	strcat(comprehension,var0);
+	strcat(comprehension,",");
+	strcat(comprehension,var2);
+	strcat(comprehension,")<=>(member(");
+	strcat(comprehension,var0);
+	strcat(comprehension,",");
+	strcat(comprehension,var1);
+	strcat(comprehension,")&");
+	strcat(comprehension,strippedformula);
+	strcat(comprehension,"))).");
+	
+	printf("This is the generated comprehension instance (added to state):\n%s\n",comprehension);
+	
+	free(strippedformula);
+	free(identifier);
+	return comprehension;
+}
+
 /*  Actually creates the parameter-free replacement instance
  *  First checks if the input has exactly two free variables, then builds it
  *  Returns null if the inference is not possible, else returns the REPL0 string
@@ -838,12 +984,8 @@ char* Replacement(char *input, int whichrep)
 		return NULL;  // make sure we actually have some variables...
 	}
 	char *newvariables;
-	//char *strippedformula = calloc(strlen(input),sizeof(char));
-	//char *identifier = calloc(50,sizeof(char));
 	char *strippedformula = NULL;
 	char *identifier = NULL;
-	//char *strippedformula;
-	//char *identifier;
 	int count = count_characters(variables, ',');
 	
 	if (count != 1) 
@@ -855,10 +997,6 @@ char* Replacement(char *input, int whichrep)
 	int length = strlen(input);
 	int commacount = 0;
 	int parencount = 0;
-	//int identlen = 0;
-	//int striplen = 0;
-	//printf("Length: %d\n",length);
-	//printf("\nThis is the formula we're doing a replacement instance of: %s\n\n", input);
 	
 	for (int i=0;i<length;i++)   //  separate the formula and the identifier
 	{		
@@ -877,10 +1015,6 @@ char* Replacement(char *input, int whichrep)
 		{
 			char temp[2] = {input[i]};
 			append(&identifier,temp,1);
-			//identifier = strcat(identifier,temp);
-			//asprintf(&identifier,temp);
-			//asprintf(&identifier,"%s%s",strippedformula,temp);
-			//identlen+=1;
 			
 		}
 		if (commacount > 1)
@@ -888,25 +1022,17 @@ char* Replacement(char *input, int whichrep)
 			if (input[i] == '.') break;
 			char temp[2] = {input[i]};
 			append(&strippedformula,temp,1);
-			//strippedformula = strcat(strippedformula,temp);
-			//asprintf(&strippedformula,"%s%s",strippedformula,temp);
-			//striplen+=1;
 		}
 	}
-	//asprintf(&strippedformula,"%s%c",strippedformula,'\0');
-	//asprintf(&identifier,"%s%c",strippedformula,'\0');
 	int lenstrip = strlen(strippedformula);
 	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
 	
 	printf("\IDENTIFIER: %s\n", identifier);
 	printf("\STRIPPEDFORMULA: %s\n", strippedformula);
-	//printf("\nThis is its identifier: %s\n", identifier);
-	
-	//printf("\n\nThis is the stripped phi: %s\n\n", strippedformula);
 	
 	//  List out the variables
 	
-	newvariables = NewVariables(variables);
+	newvariables = NewVariables(variables,0);
 	
 	char c0 = variables[0];
 	char c1 = variables[3];
@@ -943,7 +1069,7 @@ char* Replacement(char *input, int whichrep)
 		fof = Rep1(var0,var1,var2,var3,var4,var5,var6,strippedformula,identifier);
 	}
 	
-	
+	printf("This is the generated replacement instance (added to state):\n%s\n",fof);
 	free(strippedformula);
 	free(identifier);
 	
@@ -968,17 +1094,13 @@ char* FOFFreeVariables(char *input)
 	int size = strlen(input);
 	bool reading = false;
 	
-	//printf("\nsize: %d\n", size);
 	if (input[0]=='f') 
 	{
-		//printf("\nfof\n");
-		//printf("\n%s\n",input);
 		for (int i = 3;i<size;i++) {
 			if (input[i] == '.' || input[i] == ']') break;
 			if (input[i] == '!') reading = true;
 			if (upperCase(input[i]) == true && reading == true) 
 			{
-				//printf("\n capital: %c\n",input[i]);
 				if (capacity == length_of_formula)
 					{
 						capacity = 2 * length_of_formula;
@@ -998,7 +1120,6 @@ char* FOFFreeVariables(char *input)
 						}
 						output[length_of_formula] = input[d];
 						length_of_formula += 1;
-						//printf("added integer variable ident\n");
 					}
 					else 
 					{
@@ -1030,12 +1151,9 @@ char* FOFFreeVariables(char *input)
 		printf("\nCalling FOF free variables on something that is not a fof...\n");
 	}
 	
-	//printf("\n size of clause: %d\n",size);
-	//printf("This is the string of variables found: %s\n",output);
 	
 	////////////////////////////////////////////////
 	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
-	//char *final = malloc(sizeof(char) * 100);
 	char *final = NULL;
 	
 	const char s[2] = ",";
@@ -1049,15 +1167,11 @@ char* FOFFreeVariables(char *input)
 			strcat(final,token);
 			strcat(final,p);
 		}
-		//printf( " %s\n", token );
 		token = strtok(NULL, s);
 	}
 	//  null terminate the string to be safe
 	int length = strlen(final);
-	//printf("%c\n",final[length-1]);
 	final[length-1]=0;
-	
-	//printf("This is the string of variables found, with duplicates removed: %s\n",final);
 	
 	free(output);
 	return final;
@@ -1078,16 +1192,12 @@ char* CNFFreeVariables(char *input)
 	int length_of_formula = 0;
 	int size = strlen(input);
 	
-	//printf("\nsize: %d\n", size);
 	if (input[0]=='c') 
 	{
-		//printf("\ncnf\n");
-		//printf("\n%s\n",input);
 		for (int i = 3;i<size;i++) {
 			if (input[i] == '.') break;
 			else if (upperCase(input[i]) == true) 
 			{
-				//printf("\n capital: %c\n",input[i]);
 				if (capacity == length_of_formula)
 					{
 						capacity = 2 * length_of_formula;
@@ -1107,7 +1217,6 @@ char* CNFFreeVariables(char *input)
 						}
 						output[length_of_formula] = input[d];
 						length_of_formula += 1;
-						//printf("added integer variable ident\n");
 					}
 					else 
 					{
@@ -1139,30 +1248,21 @@ char* CNFFreeVariables(char *input)
 		printf("\nCalling CNF free variables on something that is not a cnf...\n");
 	}
 	
-	//printf("\n size of clause: %d\n",size);
-	//printf("Has this string of variables discovered hieroglyphics?: %s\n",output);
-	
 	////////////////////////////////////////////////
 	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
 	char *final = calloc(200, sizeof(char));
-	//char *final = NULL;
 	const char s[2] = ",";
 	char *token;
     token = strtok(output, s);
-    //printf("token: %s\n", token);
 
 	while( token != NULL ) 
 	{
 		if (strstr(final,token) == 0)
 		{
-			//char p[2] = ",";
-			//strcat(final,token);
-			//strcat(final,p);
 			int strlentoken = strlen(token);
 			append(&final,token,strlentoken);
 			append(&final,s,1);
 		}
-		//printf( " %s\n", token );
 		token = strtok(NULL, s);
 	}
 	//  null terminate the string to be safe
@@ -1171,16 +1271,10 @@ char* CNFFreeVariables(char *input)
 	{
 		length = strlen(final);
 	}
-	//printf("%c\n",final[length-1]);
-	//printf("Final: %s\n",final);
-	//printf("Length:  %d Potential invalid write if this is greater than 200!\n",length);
 	if (length!=0)
 	{
 		final[length-1]=0;
 	}
-	//printf("Final2: %s\n",final);
-	//printf("This is the string of variables found, with duplicates removed: %s\n",final);
-	
 	free(output);
 	return final;
 }
@@ -1257,7 +1351,6 @@ char* TSTPToString(Clause_p clause)
 		if (terminate_string_with_null == 1)
 		{
 			formula[length_of_formula] = 0;
-			//printf("\nRead end of input formula\n");
 			break;
 		}
 		int ch = fgetc(fp);
@@ -1273,16 +1366,11 @@ char* TSTPToString(Clause_p clause)
 		if (casted == '.')
 		{
 			terminate_string_with_null = 1;
-			//printf("\nRead terminating period\n");
 		}
 		length_of_formula += 1;
 	}
 	while(1);
 	fclose(fp);
-	
-	//printf("Length of formula: %d\n",length_of_formula);
-	
-	//printf("\nThis is the formula that has been read after printing: %s\n", formula);
 	return formula;
 }
 
@@ -1301,16 +1389,10 @@ void addFormulaToState(char* fname, ProofState_p state)
 	Scanner_p in;
 	StrTree_p skip_includes = NULL;
 	FormulaSet_p tempformulas = FormulaSetAlloc();
-	//FormulaSet_p archive = FormulaSetAlloc();
-	//ClauseSet_p garbage = ClauseSetAlloc();
 	ClauseSet_p final = ClauseSetAlloc();
 	WFormula_p form;
-	//FormulaProperties axiomtype = CPTypeAxiom;
 	long res;
 	
-	//printf("\nThis is the file we're looking for the formula in: %s\n",fname);
-	//TB_p tempterms = TBAlloc(state->signature);
-
 	in = CreateScanner(StreamTypeFile,fname,true,NULL);
 	IOFormat format = TSTPFormat;
 	ScannerSetFormat(in, format);
@@ -1324,18 +1406,12 @@ void addFormulaToState(char* fname, ProofState_p state)
 		  fprintf(stdout, "\n");
 		  res = WFormulaCNF(form,final,state->terms,state->freshvars);
 	   }
-						   
-    //FormulaSetInsert(state->f_axioms,form);
-	printf("\nNUMBER OF FORMULAS THAT WERE PRODUCED BY REPLACEMENT: %ld\n",tempformulas->members);
-	printf("\nNUMBER OF CLAUSES THAT WERE PRODUCED BY REPLACEMENT: %ld\n",final->members);
+						
+	printf("\nNUMBER OF CLAUSES THAT WERE PRODUCED: %ld\n",final->members);
 	ClauseSetInsertSet(state->tmp_store,final);
-	//ClauseSetInsertSet(state->axioms,final);
     DestroyScanner(in);
     FormulaSetFree(tempformulas);
-    //FormulaSetFree(archive);
-    //ClauseSetFree(garbage);
     ClauseSetFree(final);
-    //TBFree(tempterms);
 }
 
 
@@ -1362,10 +1438,33 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	replacement0 = Replacement(formula,0);
 	char *replacement1;
 	replacement1 = Replacement(formula,1);
-	//printf("This is our formula: %s\n",formula);
+	char *comprehension;
+	comprehension = Comprehension(formula);
 	free(formula);
+	
+	if (replacement0 == NULL && comprehension == NULL)
+	{
+		printf("\nNot one or two free variables.");
+		free(replacement0);
+		free(replacement1);
+		free(comprehension);
+		return 0;
+	}
+	
 	char *fname = "processedclauses.txt";
-	FILE *fc = fopen(fname, "ab+");
+	FILE *fc = fopen(fname, "w+");
+	fprintf(fc,"%s\n",comprehension);
+	fclose(fc);
+	if (comprehension != NULL)
+	{
+		addFormulaToState(fname,state);
+	}
+	else
+	{
+		printf("\nNot valid for comprehension!");
+	}
+	
+	fc = fopen(fname, "w+");
 	fprintf(fc,"%s\n",replacement0);
 	fclose(fc);
 	if (replacement0 != NULL) 
@@ -1378,9 +1477,7 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 		printf("\nNot valid for replacement!");
 	}
 
-	free(replacement0);
-	remove("processedclauses.txt");
-	fc = fopen(fname, "ab+");
+	fc = fopen(fname, "w+");
 	fprintf(fc,"%s\n",replacement1);
 	fclose(fc);
 	if (replacement1 != NULL) 
@@ -1394,6 +1491,8 @@ long compute_replacement(TB_p bank, OCB_p ocb, Clause_p clause,
 	}
 	
 	free(replacement1);
+	free(replacement0);
+	free(comprehension);
 	//printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
 	
 	remove("currentformula.txt");
