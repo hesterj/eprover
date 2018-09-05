@@ -91,6 +91,55 @@ static void sig_print_operator(FILE* out, Sig_p sig, FunCode op, bool comments)
 
 /*-----------------------------------------------------------------------
 //
+// Function: sig_print_operator2()
+//
+//   Print a single operator and whether it is a predicate or function symbol
+//
+// Global Variables: -
+//
+// Side Effects    : Output
+//
+/----------------------------------------------------------------------*/
+
+static void sig_print_operator2(FILE* out, Sig_p sig, FunCode op, bool comments)
+{
+   if(comments)
+   {
+      fprintf(out, "   %-13s:%2d:",
+              sig->f_info[op].name,sig->f_info[op].arity);
+      if (SigIsPredicate(sig,op))
+      {
+		  fprintf(out,"p");
+	  }
+	  else if (SigIsFunction(sig,op))
+	  {
+		  fprintf(out,"f");
+	  }
+	  else if (!SigIsFixedType(sig,op))
+	  {
+		  SigFixType(sig,op);
+		  if (SigIsPredicate(sig,op))
+		  {
+			  fprintf(out,"p");
+		  }
+		  else if (SigIsFunction(sig,op))
+		  {
+			  fprintf(out,"f");
+		  }
+		  else fprintf(out,"?");
+		  
+	  }
+	  fprintf(out,"\n");
+   }
+   else
+   {
+      fprintf(out, "   %-13s : %2d\n",
+              sig->f_info[op].name, sig->f_info[op].arity);
+   }
+}
+
+/*-----------------------------------------------------------------------
+//
 // Function: sig_compute_alpha_ranks()
 //
 //   For all symbols in sig compute the alpha-rank of the symbol.
@@ -679,6 +728,28 @@ void SigPrint(FILE* out, Sig_p sig)
    for(i=1; i<=sig->f_count; i++)
    {
       sig_print_operator(out, sig, i, true);
+   }
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: SigPrint2()
+//
+//   Simpler version that only prints the signature and whether each symbol is a function or predicate
+//  
+// Global Variables: -
+//
+// Side Effects    : Output
+//
+/----------------------------------------------------------------------*/
+
+void SigPrint2(FILE* out, Sig_p sig)
+{
+   FunCode i;
+
+   for(i=1; i<=sig->f_count; i++)
+   {
+      sig_print_operator2(out, sig, i, true);
    }
 }
 

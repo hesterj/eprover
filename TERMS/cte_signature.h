@@ -222,6 +222,7 @@ FunCode SigInsertId(Sig_p sig, const char* name, int arity, bool
           special_id);
 FunCode SigInsertFOFOp(Sig_p sig, const char* name, int arity);
 void    SigPrint(FILE* out, Sig_p sig);
+void    SigPrint2(FILE* out, Sig_p sig);
 void    SigPrintSpecial(FILE* out, Sig_p sig);
 void    SigPrintACStatus(FILE* out, Sig_p sig);
 FunCode SigParseKnownOperator(Scanner_p in, Sig_p sig);
