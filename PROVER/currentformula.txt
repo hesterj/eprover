@@ -1,0 +1,1 @@
+cnf(i_0_3412, plain, (strict_order(esk679_1(Y1),esk678_0)|member(esk681_2(Y2,Y3),Y2)|esk679_1(Y1)!=Y1|~member(Y3,esk680_1(Y2)))).

@@ -2664,6 +2664,9 @@ Clause_p Saturate(ProofState_p state, ProofControl_p control, long
          }
       }
    }
+   FILE *fc = fopen("signature.txt", "w+");
+   SigPrint(fc,state->signature);
+   fclose(fc);
    return unsatisfiable;
 }
 

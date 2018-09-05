@@ -55,9 +55,32 @@ static void sig_print_operator(FILE* out, Sig_p sig, FunCode op, bool comments)
 {
    if(comments)
    {
-      fprintf(out, "   %-13s : %2d    #  %2ld %2d \n",
+      fprintf(out, "   %-13s : %2d    #  %2ld %2d ",
               sig->f_info[op].name, sig->f_info[op].arity, op,
               sig->f_info[op].properties);
+      if (SigIsPredicate(sig,op))
+      {
+		  fprintf(out,"p");
+	  }
+	  else if (SigIsFunction(sig,op))
+	  {
+		  fprintf(out,"f");
+	  }
+	  else if (!SigIsFixedType(sig,op))
+	  {
+		  SigFixType(sig,op);
+		  if (SigIsPredicate(sig,op))
+		  {
+			  fprintf(out,"p");
+		  }
+		  else if (SigIsFunction(sig,op))
+		  {
+			  fprintf(out,"f");
+		  }
+		  else fprintf(out,"?");
+		  
+	  }
+	  fprintf(out," \n");
    }
    else
    {

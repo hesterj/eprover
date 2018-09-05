@@ -44,11 +44,17 @@ fof(power_class_defn,axiom,
       <=> (subclass(U,X) ) ) )).
 
 % Infinity
-
+/*
 fof(infinity, axiom, 
 	?[X]: (member(null_class,X) & ![Y]:(member(Y,X)=>member(successor(Y),X)) 
 		  )
 ).
+*/
+fof(infinity, axiom, 
+	(member(null_class,omega) & ![Y]:(member(Y,omega)=>member(successor(Y),omega)) 
+		  )
+).
+
 
 % Universal Choice
 
@@ -107,11 +113,13 @@ fof(apply_defn,axiom,
 fof(ordered_pair_defn,axiom,
     ( ! [X,Y] : ordered_pair(X,Y) = unordered_pair(singleton(X),unordered_pair(X,singleton(Y))) )).
     
-    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  Definition of a function...
+
+%fof(funcdef,axiom,function(X)<=>(![Y]:(member(Y,X)=>?[W]:?[Z]:(Y=ordered_pair(W,Z)))))
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% HERE BE DRAGONS
 % Cross Product
-/*
+
 fof(cross_product_defn,axiom,
     ( ! [U,V,X,Y] :
         ( member(ordered_pair(U,V),cross_product(X,Y))
@@ -124,16 +132,16 @@ fof(first_second,axiom,
     ! [X,Y] :
       (first(ordered_pair(X,Y)) = X
         & second(ordered_pair(X,Y)) = Y ) ).
-*/
+
 % Composition
-/*
+
 fof(compose_defn2,axiom,
     ( ! [XR,YR,U,V] :
         ( member(ordered_pair(U,V),compose(YR,XR))
       <=> member(V,image(YR,image(XR,singleton(U))) ) ) )).
-*/
+
 % Domain Of
-/*
+
 fof(domain_of,axiom,
     ( ! [X,Z] :
         ( member(Z,domain_of(X))
@@ -147,6 +155,42 @@ fof(range_of,axiom,
         ( member(Z,range_of(X))
       <=> (?[Y]:(member(Y,X) & Z=second(Y)) ) ))
       ).
-*/
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
+fof(strict_order,axiom,(
+    ! [R,E] :
+      ( strict_order(R,E)
+    <=> ( ( ! [X,Y] :
+            ( ( member(X,E)
+              & member(Y,E) )
+           => ~ ( member(ordered_pair(X,Y),R )
+                & member(ordered_pair(Y,X),R ) )))
+        & ! [X,Y,Z] :
+            ( ( member(X,E)
+              & member(Y,E)
+              & member(Z,E) )
+           => ( ( member(ordered_pair(X,Y),R )
+                & member(ordered_pair(Y,Z),R ) )
+             => member(ordered_pair(X,Z),R ) ) ) ) ) )).
+
+fof(least,axiom,(
+    ! [R,E,M] :
+      ( least(M,R,E)
+    <=> ( member(M,E)
+        & ! [X] :
+            ( member(X,E)
+           => ( M = X
+              | member(ordered_pair(M,X),R ) ) ) ) ))).
+
+fof(strict_well_order,axiom,(
+    ! [R,E] :
+      ( strict_well_order(R,E)
+    <=> ( strict_order(R,E)
+        & ! [A] :
+            ( ( subclass(A,E)
+              & ? [X] : member(X,A) )
+           => ? [Y] : least(Y,R,A) ) ) ) )).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
