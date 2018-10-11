@@ -160,6 +160,7 @@ ProofState_p ProofStateAlloc(FunctionProperties free_symb_prop)
    handle->processed_neg_units  = ClauseSetAlloc();
    handle->processed_non_units  = ClauseSetAlloc();
    handle->unprocessed          = ClauseSetAlloc();
+   handle->schemas          = ClauseSetAlloc();
    handle->tmp_store            = ClauseSetAlloc();
    handle->eval_store           = ClauseSetAlloc();
    handle->archive              = ClauseSetAlloc();
@@ -191,6 +192,7 @@ ProofState_p ProofStateAlloc(FunctionProperties free_symb_prop)
    GCRegisterClauseSet(handle->gc_terms, handle->processed_neg_units);
    GCRegisterClauseSet(handle->gc_terms, handle->processed_non_units);
    GCRegisterClauseSet(handle->gc_terms, handle->unprocessed);
+   GCRegisterClauseSet(handle->gc_terms, handle->schemas);
    GCRegisterClauseSet(handle->gc_terms, handle->tmp_store);
    GCRegisterClauseSet(handle->gc_terms, handle->eval_store);
    GCRegisterClauseSet(handle->gc_terms, handle->archive);
@@ -349,6 +351,7 @@ void ProofStateResetClauseSets(ProofState_p state, bool term_gc)
    ClauseSetFreeClauses(state->processed_neg_units);
    ClauseSetFreeClauses(state->processed_non_units);
    ClauseSetFreeClauses(state->unprocessed);
+   ClauseSetFreeClauses(state->schemas);
    ClauseSetFreeClauses(state->tmp_store);
    ClauseSetFreeClauses(state->eval_store);
    ClauseSetFreeClauses(state->archive);
@@ -391,6 +394,7 @@ void ProofStateFree(ProofState_p junk)
    ClauseSetFree(junk->processed_neg_units);
    ClauseSetFree(junk->processed_non_units);
    ClauseSetFree(junk->unprocessed);
+   ClauseSetFree(junk->schemas);
    ClauseSetFree(junk->tmp_store);
    ClauseSetFree(junk->eval_store);
    ClauseSetFree(junk->archive);
@@ -636,6 +640,9 @@ void ProofStateStatisticsPrint(FILE* out, ProofState_p state)
            "# Current number of unprocessed clauses: %ld\n",
            state->unprocessed->members);
    fprintf(out,
+           "# Current number of schema clauses: %ld\n",
+           state->schemas->members);
+   fprintf(out,
            "# ...number of literals in the above   : %ld\n",
            state->unprocessed->literals);
    fprintf(out,
@@ -715,6 +722,8 @@ void ProofStatePrint(FILE* out, ProofState_p state)
    ClauseSetPrint(out, state->processed_non_units, true);
    fprintf(out, "\n# Unprocessed clauses:\n");
    ClauseSetPrint(out, state->unprocessed, true);
+   fprintf(out, "\n# Schemas:\n");
+   ClauseSetPrint(out, state->schemas, true);
 }
 
 /*-----------------------------------------------------------------------

@@ -79,6 +79,7 @@ long        ClauseSetStackCardinality(PStack_p stack);
 void        ClauseSetFree(ClauseSet_p junk);
 void        ClauseSetGCMarkTerms(ClauseSet_p set);
 void        ClauseSetInsert(ClauseSet_p set, Clause_p newclause);
+void        ClauseSetInsert2(ClauseSet_p set, Clause_p newclause);  //JH
 long        ClauseSetInsertSet(ClauseSet_p set, ClauseSet_p from);
 void        ClauseSetPDTIndexedInsert(ClauseSet_p set, Clause_p newclause);
 void        ClauseSetIndexedInsert(ClauseSet_p set, FVPackedClause_p newclause);

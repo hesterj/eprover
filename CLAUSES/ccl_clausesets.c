@@ -493,6 +493,51 @@ void ClauseSetInsert(ClauseSet_p set, Clause_p newclause)
    }
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: ClauseSetInsert2()
+//
+//   Insert a clause as the last clause into the clauseset.  Using the other
+* version of the method causes infinite loops with some for loops.
+//
+// Global Variables: -
+//
+// Side Effects    : Changes set
+//
+/----------------------------------------------------------------------*/
+
+void ClauseSetInsert2(ClauseSet_p set, Clause_p newclause)
+{
+   int    i;
+#ifndef NDEBUG
+   Eval_p test;
+#endif
+   Eval_p *root;
+
+   assert(!newclause->set);
+
+   newclause->succ = set->anchor;
+   newclause->pred = set->anchor->pred;
+   set->anchor->pred->succ = newclause;
+   set->anchor->pred = newclause;
+   newclause->set = set;
+   set->members++;
+   set->literals+=ClauseLiteralNumber(newclause);
+   if(newclause->evaluations)
+   {
+      for(i=0; i<newclause->evaluations->eval_no; i++)
+      {
+         root = (void*)&(PDArrayElementP(newclause->set->eval_indices,i));
+#ifndef NDEBUG
+         test =
+#endif
+            EvalTreeInsert(root, newclause->evaluations, i);
+         assert(!test);
+      }
+      set->eval_no = MAX(newclause->evaluations->eval_no, set->eval_no);
+   }
+}
+
 
 /*-----------------------------------------------------------------------
 //
@@ -1545,11 +1590,15 @@ Clause_p ClauseSetFindMaxStandardWeight(ClauseSet_p set)
    Clause_p handle, res = NULL;
 
    assert(set);
-
+   //printf("\nIdent of anchor: %ld",set->anchor->ident);
    handle = set->anchor->succ;
    while(handle != set->anchor)
    {
       weight = ClauseStandardWeight(handle);
+      //printf("\nWeight of current clause: %ld",weight);
+      //printf("\nIdent of current clause: %ld",handle->ident);
+      //printf("Number of members of current clause's set: %ld\n",handle->set->members);
+      //ClausePrint(stdout,handle,true);
       if(weight > max_weight)
       {
          res = handle;
