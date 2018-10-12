@@ -38,13 +38,13 @@ static int append(char **str, const char *buf, int size);
 bool upperCase(char c);
 bool integer(char c);
 char* TSTPToString(Clause_p clause);
-long compute_replacement(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clause,
+long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clause,
 			  ClauseSet_p store, VarBank_p
               freshvars, ProofState_p state);
 char* CNFFreeVariables(char *input);
 char* FOFFreeVariables(char *input);
 char* FreeVariables(Clause_p clause);
-void addFormulaToState(char* fname, ProofState_p state,ProofControl_p control);
+void add_formula_to_schemas(char* fname, ProofState_p state,ProofControl_p control);
 int count_characters(const char *str, char character);
 char* Replacement(char *input, int whichrep);
 char* NewVariables(char *inp, int reporspec);
@@ -415,7 +415,7 @@ char* Comprehension(char *input)
 	
 	char *variables = CNFFreeVariables(input);
 	
-	printf("\nThis is our list of variables: %s\n",variables);
+	//printf("\nThis is our list of variables: %s\n",variables);
 	
 	if (!variables || variables[0] == '\0') 
 	{
@@ -466,8 +466,8 @@ char* Comprehension(char *input)
 	int lenstrip = strlen(strippedformula);
 	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
 	
-	printf("\nCOMPREHENSION IDENTIFIER: %s\n", identifier);
-	printf("COMPREHENSION STRIPPEDFORMULA: %s\n", strippedformula);
+	//printf("\nCOMPREHENSION IDENTIFIER: %s\n", identifier);
+	//printf("COMPREHENSION STRIPPEDFORMULA: %s\n", strippedformula);
 	
 	//  List out the variables
 	
@@ -510,7 +510,7 @@ char* Comprehension(char *input)
 	strcat(comprehension,strippedformula);
 	strcat(comprehension,"))).");
 	
-	printf("This is the generated comprehension instance (added to state):\n%s\n",comprehension);
+	//printf("This is the generated comprehension instance (added to state):\n%s\n",comprehension);
 	
 	free(strippedformula);
 	free(identifier);
@@ -532,7 +532,7 @@ char* Replacement(char *input, int whichrep)
 	
 	char *variables = CNFFreeVariables(input);
 	
-	printf("\nThis is our list of variables: %s\n",variables);
+	//printf("\nThis is our list of variables: %s\n",variables);
 	
 	if (!variables) 
 	{
@@ -583,8 +583,8 @@ char* Replacement(char *input, int whichrep)
 	int lenstrip = strlen(strippedformula);
 	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
 	
-	printf("\IDENTIFIER: %s\n", identifier);
-	printf("\STRIPPEDFORMULA: %s\n", strippedformula);
+	//printf("\IDENTIFIER: %s\n", identifier);
+	//printf("\STRIPPEDFORMULA: %s\n", strippedformula);
 	
 	//  List out the variables
 	
@@ -625,7 +625,7 @@ char* Replacement(char *input, int whichrep)
 		fof = Rep1(var0,var1,var2,var3,var4,var5,var6,strippedformula,identifier);
 	}
 	
-	printf("This is the generated replacement instance (added to state):\n%s\n",fof);
+	//printf("This is the generated replacement instance (added to state):\n%s\n",fof);
 	free(strippedformula);
 	free(identifier);
 	
@@ -939,7 +939,7 @@ char* TSTPToString(Clause_p clause)
  * 
 */
 
-void addFormulaToState(char* fname, ProofState_p state, ProofControl_p control) 
+void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p control) 
 {
 	Scanner_p in;
 	Clause_p tobeevaluated;
@@ -956,7 +956,7 @@ void addFormulaToState(char* fname, ProofState_p state, ProofControl_p control)
 	   {
 		  form = WFormulaParse(in, state->terms);
 		  res = WFormulaCNF(form,final,state->terms,state->freshvars);
-		  printf("Number of clauses in final: %ld\n",final->members);
+		  //printf("Number of clauses in final: %ld\n",final->members);
 	   }
 	printf("\nEvaluating schema instances and adding them state->schemas\n");
 	while (tobeevaluated = ClauseSetExtractFirst(final))
@@ -966,11 +966,26 @@ void addFormulaToState(char* fname, ProofState_p state, ProofControl_p control)
 	}
 	
 	// Select the schema instance with best standard weight, add it to tmp_store
-	printf("\n# of elements of schemas: %ld\n",state->schemas->members);
+	printf("\n# of elements of schemas: %ld\n Selected:\n",state->schemas->members);
 	
 	//  This one works
 	//Clause_p selected = ClauseSetFindMaxStandardWeight(state->schemas);
-	
+	//selected->pred->succ = selected->succ;
+	//selected->succ->pred = selected->pred;
+	//printf("This is the standard selected clause:\n");
+	//ClausePrint(GlobalOut,selected,true);
+	printf("\nThis is state-> unprocessed:\n\n\n");
+	ClauseSetPrint(GlobalOut,state->unprocessed,true);
+	printf("\n\n\n This is state->schemas\n\n\n");
+	ClauseSetPrint(GlobalOut,state->schemas,true);
+	Clause_p selected = control->hcb->hcb_select(control->hcb,
+                                     state->schemas);
+    printf("\n\n\n This is state->schemas\n\n\n");
+    ClauseSetPrint(GlobalOut,state->schemas,true);
+    printf("This is the hcb selected clause:\n");
+    ClausePrint(GlobalOut,selected,true);
+	exit(0);
+	/*
 	//  This one doesn't
 	Clause_p selected = NULL;
 	selected = control->hcb->hcb_select(control->hcb,
@@ -986,9 +1001,12 @@ void addFormulaToState(char* fname, ProofState_p state, ProofControl_p control)
 		ClauseSetFree(final);
 		return;
 	}
+	else 
+	{
+		printf("\nSelected a non-null clause from schemas!  Success\n!");
+	}
 	// ??????????????????
-	selected->pred->succ = selected->succ;
-	selected->succ->pred = selected->pred;
+	*/
 	
 	ClauseSetInsert(state->tmp_store,selected);
 	
@@ -1010,7 +1028,7 @@ void addFormulaToState(char* fname, ProofState_p state, ProofControl_p control)
  *  parent alias seems to be same as clause but with different name for variables
 */
 
-long compute_replacement(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clause,
+long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clause,
 			  ClauseSet_p store, VarBank_p
               freshvars, ProofState_p state) 
 {
@@ -1038,7 +1056,7 @@ long compute_replacement(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p 
 	fclose(fc);
 	if (comprehension != NULL)
 	{
-		addFormulaToState(fname,state,control);
+		add_formula_to_schemas(fname,state,control);
 	}
 	else
 	{
@@ -1051,7 +1069,7 @@ long compute_replacement(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p 
 	if (replacement0 != NULL) 
 	{
 		//printf("\nThis is our replacement instance: %s\n",replacement);
-		addFormulaToState(fname,state,control);
+		add_formula_to_schemas(fname,state,control);
 	}
 	else
 	{
@@ -1064,7 +1082,7 @@ long compute_replacement(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p 
 	if (replacement1 != NULL) 
 	{
 		//printf("\nThis is our replacement instance: %s\n",replacement);
-		addFormulaToState(fname,state,control);
+		add_formula_to_schemas(fname,state,control);
 	}
 	else
 	{
@@ -1559,6 +1577,12 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
 static void generate_new_clauses(ProofState_p state, ProofControl_p
                                  control, Clause_p clause, Clause_p tmp_copy)
 {
+   state->paramod_count += compute_schemas(control,
+									state->terms,
+									control->ocb,
+									clause,
+                                    state->tmp_store, state->freshvars,
+                                    state);
    if(control->heuristic_parms.enable_eq_factoring)
    {
       state->factor_count+=
@@ -2460,12 +2484,14 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
 
    clause = control->hcb->hcb_select(control->hcb,
                                      state->unprocessed);
-   state->paramod_count += compute_replacement(control,
+   /*
+   state->paramod_count += compute_schemas(control,
 									state->terms,
 									control->ocb,
 									clause,
                                     state->tmp_store, state->freshvars,
                                     state);
+   */
    if(!clause)
    {
       return NULL;

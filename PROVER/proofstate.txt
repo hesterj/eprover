@@ -1,0 +1,82 @@
+
+# Processed positive unit clauses:
+
+# Processed negative unit clauses:
+
+# Processed non-unit clauses:
+
+# Unprocessed clauses:
+cnf(i_0_16, plain, (function(esk3_0))).
+cnf(i_0_14, plain, (member(null_class,omega))).
+cnf(i_0_87, negated_conjecture, (member(esk19_0,omega))).
+cnf(i_0_23, plain, (~member(X1,null_class))).
+cnf(i_0_4, plain, (X1=null_class|member(esk2_1(X1),X1))).
+cnf(i_0_3, plain, (X1=null_class|disjoint(esk2_1(X1),X1))).
+cnf(i_0_85, plain, (strict_order(X1,X2)|~strict_well_order(X1,X2))).
+cnf(i_0_11, plain, (member(X1,power_class(X2))|~subclass(X1,X2))).
+cnf(i_0_5, plain, (member(X1,unordered_pair(X3,X2))|X1!=X2)).
+cnf(i_0_6, plain, (member(X1,unordered_pair(X2,X3))|X1!=X2)).
+cnf(i_0_12, plain, (subclass(X1,X2)|~member(X1,power_class(X2)))).
+cnf(i_0_44, plain, (member(X3,domain_of(X2))|X3!=first(X1)|~member(X1,X2))).
+cnf(i_0_47, plain, (member(X3,range_of(X2))|X3!=second(X1)|~member(X1,X2))).
+cnf(i_0_25, plain, (disjoint(X1,X2)|member(esk5_2(X1,X2),X2))).
+cnf(i_0_26, plain, (disjoint(X1,X2)|member(esk5_2(X1,X2),X1))).
+cnf(i_0_21, plain, (subclass(X1,X2)|member(esk4_2(X1,X2),X1))).
+cnf(i_0_22, plain, (member(X3,X2)|~member(X3,X1)|~subclass(X1,X2))).
+cnf(i_0_8, plain, (member(X1,union(X3,X2))|~member(X1,X2))).
+cnf(i_0_9, plain, (member(X1,union(X2,X3))|~member(X1,X2))).
+cnf(i_0_45, plain, (first(esk8_2(X2,X1))=X1|~member(X1,domain_of(X2)))).
+cnf(i_0_48, plain, (second(esk9_2(X2,X1))=X1|~member(X1,range_of(X2)))).
+cnf(i_0_29, plain, (member(X1,sum_class(X3))|~member(X2,X3)|~member(X1,X2))).
+cnf(i_0_7, plain, (X1=X3|X1=X2|~member(X1,unordered_pair(X2,X3)))).
+cnf(i_0_27, plain, (~member(X3,X2)|~member(X3,X1)|~disjoint(X1,X2))).
+cnf(i_0_31, plain, (member(X1,esk6_2(X1,X2))|~member(X1,sum_class(X2)))).
+cnf(i_0_30, plain, (member(esk6_2(X1,X2),X2)|~member(X1,sum_class(X2)))).
+cnf(i_0_46, plain, (member(esk8_2(X1,X2),X1)|~member(X2,domain_of(X1)))).
+cnf(i_0_49, plain, (member(esk9_2(X1,X2),X1)|~member(X2,range_of(X1)))).
+cnf(i_0_83, plain, (strict_well_order(X1,X2)|subclass(esk17_2(X1,X2),X2)|~strict_order(X1,X2))).
+cnf(i_0_18, plain, (member(X1,X2)|~member(X1,intersection(X3,X2)))).
+cnf(i_0_19, plain, (member(X1,X2)|~member(X1,intersection(X2,X3)))).
+cnf(i_0_20, plain, (subclass(X1,X2)|~member(esk4_2(X1,X2),X2))).
+cnf(i_0_1, plain, (X1=X2|member(esk1_2(X1,X2),X2)|member(esk1_2(X1,X2),X1))).
+cnf(i_0_17, plain, (member(X1,intersection(X2,X3))|~member(X1,X3)|~member(X1,X2))).
+cnf(i_0_10, plain, (member(X1,X3)|member(X1,X2)|~member(X1,union(X2,X3)))).
+cnf(i_0_73, plain, (strict_order(X1,X2)|member(esk10_2(X1,X2),X2)|member(esk12_2(X1,X2),X2))).
+cnf(i_0_72, plain, (strict_order(X1,X2)|member(esk10_2(X1,X2),X2)|member(esk13_2(X1,X2),X2))).
+cnf(i_0_71, plain, (strict_order(X1,X2)|member(esk10_2(X1,X2),X2)|member(esk14_2(X1,X2),X2))).
+cnf(i_0_67, plain, (strict_order(X1,X2)|member(esk11_2(X1,X2),X2)|member(esk12_2(X1,X2),X2))).
+cnf(i_0_66, plain, (strict_order(X1,X2)|member(esk11_2(X1,X2),X2)|member(esk13_2(X1,X2),X2))).
+cnf(i_0_65, plain, (strict_order(X1,X2)|member(esk11_2(X1,X2),X2)|member(esk14_2(X1,X2),X2))).
+cnf(i_0_80, plain, (member(X1,X2)|~least(X1,X3,X2))).
+cnf(i_0_82, plain, (strict_well_order(X1,X2)|member(esk18_2(X1,X2),esk17_2(X1,X2))|~strict_order(X1,X2))).
+cnf(i_0_13, plain, (member(union(X1,unordered_pair(X1,X1)),omega)|~member(X1,omega))).
+cnf(i_0_86, negated_conjecture, (~member(union(esk19_0,unordered_pair(esk19_0,esk19_0)),omega))).
+cnf(i_0_2, plain, (X1=X2|~member(esk1_2(X1,X2),X2)|~member(esk1_2(X1,X2),X1))).
+cnf(i_0_81, plain, (strict_well_order(X2,X3)|~strict_order(X2,X3)|~least(X1,X2,esk17_2(X2,X3)))).
+cnf(i_0_77, plain, (least(X1,X2,X3)|esk15_3(X2,X3,X1)!=X1|~member(X1,X3))).
+cnf(i_0_15, plain, (X1=null_class|member(sum_class(image(esk3_0,unordered_pair(X1,X1))),X1))).
+cnf(i_0_34, plain, (member(esk7_3(X1,X2,X3),X2)|~member(X1,image(X3,X2)))).
+cnf(i_0_78, plain, (least(X3,X1,X2)|member(esk15_3(X1,X2,X3),X2)|~member(X3,X2))).
+cnf(i_0_84, plain, (least(esk16_3(X4,X2,X1),X4,X1)|~member(X3,X1)|~subclass(X1,X2)|~strict_well_order(X4,X2))).
+cnf(i_0_41, plain, (first(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X2,X2))))=X1)).
+cnf(i_0_40, plain, (second(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X2,X2))))=X2)).
+cnf(i_0_37, plain, (member(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X3,X3))),cross_product(X2,X4))|~member(X3,X4)|~member(X1,X2))).
+cnf(i_0_79, plain, (X1=X3|member(unordered_pair(unordered_pair(X3,X3),unordered_pair(X3,unordered_pair(X1,X1))),X4)|~member(X1,X2)|~least(X3,X4,X2))).
+cnf(i_0_38, plain, (member(X1,X2)|~member(unordered_pair(unordered_pair(X3,X3),unordered_pair(X3,unordered_pair(X1,X1))),cross_product(X4,X2)))).
+cnf(i_0_39, plain, (member(X1,X2)|~member(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X3,X3))),cross_product(X2,X4)))).
+cnf(i_0_32, plain, (member(X3,image(X4,X2))|~member(X1,X2)|~member(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X3,X3))),X4))).
+cnf(i_0_42, plain, (member(unordered_pair(unordered_pair(X4,X4),unordered_pair(X4,unordered_pair(X1,X1))),compose(X2,X3))|~member(X1,image(X2,image(X3,unordered_pair(X4,X4)))))).
+cnf(i_0_43, plain, (member(X2,image(X3,image(X4,unordered_pair(X1,X1))))|~member(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X2,X2))),compose(X3,X4)))).
+cnf(i_0_75, plain, (~member(X3,X2)|~member(X1,X2)|~strict_order(X4,X2)|~member(unordered_pair(unordered_pair(X3,X3),unordered_pair(X3,unordered_pair(X1,X1))),X4)|~member(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X3,X3))),X4))).
+cnf(i_0_70, plain, (strict_order(X1,X2)|member(esk10_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk12_2(X1,X2),esk12_2(X1,X2)),unordered_pair(esk12_2(X1,X2),unordered_pair(esk13_2(X1,X2),esk13_2(X1,X2)))),X1))).
+cnf(i_0_69, plain, (strict_order(X1,X2)|member(esk10_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk13_2(X1,X2),esk13_2(X1,X2)),unordered_pair(esk13_2(X1,X2),unordered_pair(esk14_2(X1,X2),esk14_2(X1,X2)))),X1))).
+cnf(i_0_64, plain, (strict_order(X1,X2)|member(esk11_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk12_2(X1,X2),esk12_2(X1,X2)),unordered_pair(esk12_2(X1,X2),unordered_pair(esk13_2(X1,X2),esk13_2(X1,X2)))),X1))).
+cnf(i_0_63, plain, (strict_order(X1,X2)|member(esk11_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk13_2(X1,X2),esk13_2(X1,X2)),unordered_pair(esk13_2(X1,X2),unordered_pair(esk14_2(X1,X2),esk14_2(X1,X2)))),X1))).
+cnf(i_0_61, plain, (strict_order(X1,X2)|member(esk12_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk10_2(X1,X2),esk10_2(X1,X2)),unordered_pair(esk10_2(X1,X2),unordered_pair(esk11_2(X1,X2),esk11_2(X1,X2)))),X1))).
+cnf(i_0_55, plain, (strict_order(X1,X2)|member(esk12_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk11_2(X1,X2),esk11_2(X1,X2)),unordered_pair(esk11_2(X1,X2),unordered_pair(esk10_2(X1,X2),esk10_2(X1,X2)))),X1))).
+cnf(i_0_60, plain, (strict_order(X1,X2)|member(esk13_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk10_2(X1,X2),esk10_2(X1,X2)),unordered_pair(esk10_2(X1,X2),unordered_pair(esk11_2(X1,X2),esk11_2(X1,X2)))),X1))).
+cnf(i_0_54, plain, (strict_order(X1,X2)|member(esk13_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk11_2(X1,X2),esk11_2(X1,X2)),unordered_pair(esk11_2(X1,X2),unordered_pair(esk10_2(X1,X2),esk10_2(X1,X2)))),X1))).
+cnf(i_0_59, plain, (strict_order(X1,X2)|member(esk14_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk10_2(X1,X2),esk10_2(X1,X2)),unordered_pair(esk10_2(X1,X2),unordered_pair(esk11_2(X1,X2),esk11_2(X1,X2)))),X1))).
+cnf(i_0_53, plain, (strict_order(X1,X2)|member(esk14_2(X1,X2),X2)|member(unordered_pair(unordered_pair(esk11_2(X1,X2),esk11_2(X1,X2)),unordered_pair(esk11_2(X1,X2),unordered_pair(esk10_2(X1,X2),esk10_2(X1,X2)))),X1))).
+cnf(i_0_74, plain, (member(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X4,X4))),X5)|~member(X4,X2)|~member(X3,X2)|~member(X1,X2)|~strict_order(X5,X2)|~member(unordered_pair(unordered_pair(X3,X3),unordered_pair(X3,unordered_pair(X4,X4))),X5)|~member(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X3,X3))),X5))).
+cnf(i_0_68, p
