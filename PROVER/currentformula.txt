@@ -1,1 +1,0 @@
-cnf(i_0_23, plain, (~member(X1,null_class))).

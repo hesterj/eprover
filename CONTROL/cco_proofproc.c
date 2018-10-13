@@ -961,54 +961,37 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 	printf("\nEvaluating schema instances and adding them state->schemas\n");
 	while (tobeevaluated = ClauseSetExtractFirst(final))
 	{
-      ClauseSetInsert(state->schemas, tobeevaluated);
+      ClauseSetIndexedInsertClause(state->schemas, tobeevaluated);
       HCBClauseEvaluate(control->hcb, tobeevaluated);
 	}
 	
 	// Select the schema instance with best standard weight, add it to tmp_store
-	printf("\n# of elements of schemas: %ld\n Selected:\n",state->schemas->members);
+	printf("\n# of elements of schemas: %ld\n",state->schemas->members);
 	
 	//  This one works
 	//Clause_p selected = ClauseSetFindMaxStandardWeight(state->schemas);
-	//selected->pred->succ = selected->succ;
-	//selected->succ->pred = selected->pred;
-	//printf("This is the standard selected clause:\n");
 	//ClausePrint(GlobalOut,selected,true);
-	printf("\nThis is state-> unprocessed:\n\n\n");
-	ClauseSetPrint(GlobalOut,state->unprocessed,true);
-	printf("\n\n\n This is state->schemas\n\n\n");
-	ClauseSetPrint(GlobalOut,state->schemas,true);
+	//printf("\nThis is state-> unprocessed:\n");
+	//ClauseSetPrint(GlobalOut,state->unprocessed,true);
+	//printf("\n\n\n This is state->schemas\n\n\n");
+	//ClauseSetPrint(GlobalOut,state->schemas,true);
+	ClauseSetFVIndexify(state->schemas);
 	Clause_p selected = control->hcb->hcb_select(control->hcb,
                                      state->schemas);
-    printf("\n\n\n This is state->schemas\n\n\n");
+              
+                        
+    //Clause_p selected = ClauseSetFindBest(state->schemas, control->hcb->current_eval);
+    /*
+    printf("\nThis is state->schemas\n");
     ClauseSetPrint(GlobalOut,state->schemas,true);
+    */
     printf("This is the hcb selected clause:\n");
     ClausePrint(GlobalOut,selected,true);
-	exit(0);
-	/*
-	//  This one doesn't
-	Clause_p selected = NULL;
-	selected = control->hcb->hcb_select(control->hcb,
-                                     state->schemas);
-                                     
-    // ??????????????????                                 
-    if (!selected)
-    {
-		printf("\n%p", (void *) &selected);
-		printf("\n Selected dangling pointer?");
-		DestroyScanner(in);
-		FormulaSetFree(tempformulas);
-		ClauseSetFree(final);
-		return;
-	}
-	else 
-	{
-		printf("\nSelected a non-null clause from schemas!  Success\n!");
-	}
-	// ??????????????????
-	*/
+    
+	selected->pred->succ = selected->succ;
+	selected->succ->pred = selected->pred;
+	ClauseSetIndexedInsertClause(state->tmp_store,selected);
 	
-	ClauseSetInsert(state->tmp_store,selected);
 	
     DestroyScanner(in);
     FormulaSetFree(tempformulas);
@@ -2494,6 +2477,7 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
    */
    if(!clause)
    {
+	  printf("\nSelected a null clause from state->unprocessed\n");
       return NULL;
    }
    //EvalListPrintComment(GlobalOut, clause->evaluations); printf("\n");

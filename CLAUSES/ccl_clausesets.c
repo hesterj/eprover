@@ -804,6 +804,7 @@ Clause_p ClauseSetFindBest(ClauseSet_p set, int idx)
 
    if(!evaluation)
    {
+	  printf("\nNULL evaluation\n");
       assert(set->anchor->succ == set->anchor);
       return NULL;
    }

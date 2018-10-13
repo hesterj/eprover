@@ -1,1 +1,0 @@
-fof(cmpi_0_23,axiom,![A0]:?[A1]:![X1]:(member(X1,A1)<=>(member(X1,A0)& (~member(X1,null_class))))).
