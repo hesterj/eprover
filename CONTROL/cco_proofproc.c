@@ -956,7 +956,6 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 	   {
 		  form = WFormulaParse(in, state->terms);
 		  res = WFormulaCNF(form,final,state->terms,state->freshvars);
-		  //printf("Number of clauses in final: %ld\n",final->members);
 	   }
 	printf("\nEvaluating schema instances and adding them state->schemas\n");
 	while (tobeevaluated = ClauseSetExtractFirst(final))
@@ -967,35 +966,33 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 	
 	// Select the schema instance with best standard weight, add it to tmp_store
 	printf("\n# of elements of schemas: %ld\n",state->schemas->members);
-	
-	//  This one works
-	//Clause_p selected = ClauseSetFindMaxStandardWeight(state->schemas);
-	//ClausePrint(GlobalOut,selected,true);
-	//printf("\nThis is state-> unprocessed:\n");
-	//ClauseSetPrint(GlobalOut,state->unprocessed,true);
-	//printf("\n\n\n This is state->schemas\n\n\n");
-	//ClauseSetPrint(GlobalOut,state->schemas,true);
 	ClauseSetFVIndexify(state->schemas);
 	Clause_p selected = control->hcb->hcb_select(control->hcb,
                                      state->schemas);
-              
-                        
-    //Clause_p selected = ClauseSetFindBest(state->schemas, control->hcb->current_eval);
-    /*
-    printf("\nThis is state->schemas\n");
-    ClauseSetPrint(GlobalOut,state->schemas,true);
-    */
-    printf("This is the hcb selected clause:\n");
+    if (!selected)
+    {
+		DestroyScanner(in);
+		FormulaSetFree(tempformulas);
+		ClauseSetFree(final);
+		return;
+	}
+    printf("This is the hcb selected clause from state->schemas:\n");
     ClausePrint(GlobalOut,selected,true);
-    
+    ClauseSetExtractEntry(selected);
+    /*
 	selected->pred->succ = selected->succ;
 	selected->succ->pred = selected->pred;
+	state->tmp_store->anchor->pred->succ = selected;
+	state->tmp_store->anchor->pred = selected;
+	selected->set = state->tmp_store;
+	*/
 	ClauseSetIndexedInsertClause(state->tmp_store,selected);
 	
 	
     DestroyScanner(in);
     FormulaSetFree(tempformulas);
     ClauseSetFree(final);
+    printf("\nSuccessfully added schema to tmp_store\n");
 }
 
 /*	Compute ALL ZFC comprehension instances with the given clause
@@ -2464,9 +2461,18 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
    Clause_p         clause, resclause, tmp_copy, empty, arch_copy = NULL;
    FVPackedClause_p pclause;
    SysDate          clausedate;
-
+   /*
+   long deleted;
+   deleted = ClauseSetDeleteCopies(state->unprocessed);
+   if (deleted > 0)
+   {
+	   printf("\nDeleted %ld duplicate clauses.\n");
+   }
+   */
+   //printf("state->unprocessed:\n");
+   //ClauseSetPrint(GlobalOut,state->unprocessed,false);
    clause = control->hcb->hcb_select(control->hcb,
-                                     state->unprocessed);
+                              state->unprocessed);
    /*
    state->paramod_count += compute_schemas(control,
 									state->terms,
@@ -2474,6 +2480,7 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
 									clause,
                                     state->tmp_store, state->freshvars,
                                     state);
+          
    */
    if(!clause)
    {
@@ -2486,7 +2493,11 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
       putc('#', GlobalOut);
    }
    assert(clause);
-
+   //printf("\nClause selected in ProcessClause:\n");
+   //ClausePrint(GlobalOut,clause,false);
+   //printf("\nThis is the number of members of the selected clause's set: %ld\n",clause->set->members);
+   //printf("This is the number of members of state->unprocessed: %ld\n",state->unprocessed->members);
+   
    ClauseSetExtractEntry(clause);
    ClauseRemoveEvaluations(clause);
    // Orphans have been excluded during selection now

@@ -1,0 +1,1 @@
+cnf(i_0_583547, plain, (member(X1,X2)|~member(X1,esk17355_1(X2)))).
