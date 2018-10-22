@@ -1,1 +1,1 @@
-cnf(i_0_583547, plain, (member(X1,X2)|~member(X1,esk17355_1(X2)))).
+cnf(i_0_27951, plain, (subclass(X1,esk19_1(esk19_1(X1))))).

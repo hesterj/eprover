@@ -420,7 +420,7 @@ char* Comprehension(char *input)
 	if (!variables || variables[0] == '\0') 
 	{
 		free(variables);
-		printf("\nNo variables!\n");
+		//printf("\nNo variables!\n");
 		return NULL;  // make sure we actually have some variables...
 	}
 	char *newvariables;
@@ -957,7 +957,7 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 		  form = WFormulaParse(in, state->terms);
 		  res = WFormulaCNF(form,final,state->terms,state->freshvars);
 	   }
-	printf("\nEvaluating schema instances and adding them state->schemas\n");
+	//printf("\nEvaluating schema instances and adding them state->schemas\n");
 	while (tobeevaluated = ClauseSetExtractFirst(final))
 	{
       ClauseSetIndexedInsertClause(state->schemas, tobeevaluated);
@@ -965,7 +965,7 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 	}
 	
 	// Select the schema instance with best standard weight, add it to tmp_store
-	printf("\n# of elements of schemas: %ld\n",state->schemas->members);
+	//printf("\n# of elements of schemas: %ld\n",state->schemas->members);
 	ClauseSetFVIndexify(state->schemas);
 	Clause_p selected = control->hcb->hcb_select(control->hcb,
                                      state->schemas);
@@ -976,8 +976,8 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 		ClauseSetFree(final);
 		return;
 	}
-    printf("This is the hcb selected clause from state->schemas:\n");
-    ClausePrint(GlobalOut,selected,true);
+    //printf("This is the hcb selected clause from state->schemas:\n");
+    //ClausePrint(GlobalOut,selected,true);
     ClauseSetExtractEntry(selected);
     /*
 	selected->pred->succ = selected->succ;
@@ -992,7 +992,7 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
     DestroyScanner(in);
     FormulaSetFree(tempformulas);
     ClauseSetFree(final);
-    printf("\nSuccessfully added schema to tmp_store\n");
+    //printf("\nSuccessfully added schema to tmp_store\n");
 }
 
 /*	Compute ALL ZFC comprehension instances with the given clause
@@ -1023,7 +1023,7 @@ long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clau
 	
 	if (replacement0 == NULL && comprehension == NULL)
 	{
-		printf("\nNot one or two free variables.");
+		//printf("\nNot one or two free variables.");
 		free(replacement0);
 		free(replacement1);
 		free(comprehension);
@@ -1040,7 +1040,7 @@ long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clau
 	}
 	else
 	{
-		printf("\nNot valid for comprehension!");
+		//printf("\nNot valid for comprehension!");
 	}
 	
 	fc = fopen(fname, "w+");
@@ -1053,7 +1053,7 @@ long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clau
 	}
 	else
 	{
-		printf("\nNot valid for replacement!");
+		//printf("\nNot valid for replacement!");
 	}
 
 	fc = fopen(fname, "w+");
@@ -1066,7 +1066,7 @@ long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clau
 	}
 	else
 	{
-		printf("\nNot valid for replacement!");
+		//printf("\nNot valid for replacement!");
 	}
 	
 	free(replacement1);
@@ -2494,7 +2494,7 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
    }
    assert(clause);
    //printf("\nClause selected in ProcessClause:\n");
-   //ClausePrint(GlobalOut,clause,false);
+   //ClausePrint(GlobalOut,clause,true);
    //printf("\nThis is the number of members of the selected clause's set: %ld\n",clause->set->members);
    //printf("This is the number of members of state->unprocessed: %ld\n",state->unprocessed->members);
    

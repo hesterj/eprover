@@ -1,1 +1,1 @@
-fof(rpmi_0_583547,axiom,![X1]:?[X2]:![A0]:( (member(X1,A0)|~member(X1,esk17355_1(A0)))<=>(A0=X2))=>(![A1]:?[A2]:![A3]:(member(A3,A2)<=>?[A4]:(member(A4,A1)& (member(A4,A3)|~member(A4,esk17355_1(A3))))))).
+fof(cmpi_0_27951,axiom,![A0]:?[A1]:![X1]:(member(X1,A1)<=>(member(X1,A0)& (subclass(X1,esk19_1(esk19_1(X1))))))).

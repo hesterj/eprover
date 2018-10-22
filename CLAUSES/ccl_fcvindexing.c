@@ -366,14 +366,7 @@ bool FVIndexDelete(FVIAnchor_p index, Clause_p clause)
    FVIndex_p handle;
    long i;
    bool res;
-   if (!index)
-   {
-	   printf("\nindex is null in FCIndexDelete\n");
-   }
-   if (!(index->perm_vector));
-   {
-	   printf("\nindex->perm_vector is null in FCIndexDelete\n");
-   }
+   
    vec = OptimizedVarFreqVectorCompute(clause, index->perm_vector,
                    index->cspec);
    /* FreqVector-Computation is measured independently */
