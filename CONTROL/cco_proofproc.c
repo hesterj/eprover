@@ -41,6 +41,9 @@ char* TSTPToString(Clause_p clause);
 long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clause,
 			  ClauseSet_p store, VarBank_p
               freshvars, ProofState_p state);
+long compute_schemas_set(ProofControl_p control, TB_p bank, OCB_p ocb, ClauseSet_p handle,
+			  ClauseSet_p store, VarBank_p
+              freshvars, ProofState_p state);
 char* CNFFreeVariables(char *input);
 char* FOFFreeVariables(char *input);
 char* FreeVariables(Clause_p clause);
@@ -944,7 +947,6 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 	Scanner_p in;
 	Clause_p tobeevaluated;
 	StrTree_p skip_includes = NULL;
-	FormulaSet_p tempformulas = FormulaSetAlloc();
 	ClauseSet_p final = ClauseSetAlloc();
 	WFormula_p form;
 	long res;
@@ -957,16 +959,18 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 		  form = WFormulaParse(in, state->terms);
 		  res = WFormulaCNF(form,final,state->terms,state->freshvars);
 	   }
-	//printf("\nEvaluating schema instances and adding them state->schemas\n");
+	//printf("\nEvaluating schema instances and adding them state->tmp_store\n");
 	while (tobeevaluated = ClauseSetExtractFirst(final))
 	{
-      ClauseSetIndexedInsertClause(state->schemas, tobeevaluated);
+	  //ClauseSetExtractEntry(tobeevaluated);
+      ClauseSetIndexedInsertClause(state->tmp_store, tobeevaluated);
       HCBClauseEvaluate(control->hcb, tobeevaluated);
 	}
 	
 	// Select the schema instance with best standard weight, add it to tmp_store
 	//printf("\n# of elements of schemas: %ld\n",state->schemas->members);
-	ClauseSetFVIndexify(state->schemas);
+	//ClauseSetFVIndexify(state->schemas);
+	/*
 	Clause_p selected = control->hcb->hcb_select(control->hcb,
                                      state->schemas);
     if (!selected)
@@ -975,10 +979,12 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 		FormulaSetFree(tempformulas);
 		ClauseSetFree(final);
 		return;
+		
 	}
+	*/
     //printf("This is the hcb selected clause from state->schemas:\n");
     //ClausePrint(GlobalOut,selected,true);
-    ClauseSetExtractEntry(selected);
+    //ClauseSetExtractEntry(selected);
     /*
 	selected->pred->succ = selected->succ;
 	selected->succ->pred = selected->pred;
@@ -986,16 +992,15 @@ void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p cont
 	state->tmp_store->anchor->pred = selected;
 	selected->set = state->tmp_store;
 	*/
-	ClauseSetIndexedInsertClause(state->tmp_store,selected);
+	//ClauseSetIndexedInsertClause(state->tmp_store,selected);
 	
 	
     DestroyScanner(in);
-    FormulaSetFree(tempformulas);
     ClauseSetFree(final);
     //printf("\nSuccessfully added schema to tmp_store\n");
 }
 
-/*	Compute ALL ZFC comprehension instances with the given clause
+/*	Compute ALL ZFC comprehension instances with the given clause.  Add them to tmp_store.
  *  John Hester
  * 
  * 	Parts Taken from ClauseTSTPPrint in order to get string
@@ -1077,6 +1082,90 @@ long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clau
 	remove("currentformula.txt");
 	remove("processedclauses.txt");
 	//printf("\nleaving method\n");
+	return 1;
+	
+}
+
+//Same as above but, for all clauses in the set
+
+long compute_schemas_set(ProofControl_p control, TB_p bank, OCB_p ocb, ClauseSet_p handle,
+			  ClauseSet_p store, VarBank_p
+              freshvars, ProofState_p state) 
+{
+	Clause_p clause;
+	printf("\nHow many axioms do we have: %ld\n",state->axioms->members);
+	printf("How many elements of tmp_store are there: %ld\n",state->tmp_store->members);
+	for(clause = state->axioms->anchor->succ;
+		clause != state->axioms->anchor;
+		clause = clause->succ)
+	{
+		char *formula = TSTPToString(clause);
+		char *replacement0;
+		replacement0 = Replacement(formula,0);
+		char *replacement1;
+		replacement1 = Replacement(formula,1);
+		char *comprehension;
+		comprehension = Comprehension(formula);
+		free(formula);
+		
+		if (replacement0 == NULL && comprehension == NULL)
+		{
+			//printf("\nNot one or two free variables.");
+			free(replacement0);
+			free(replacement1);
+			free(comprehension);
+			continue;
+		}
+		
+		char *fname = "processedclauses.txt";
+		FILE *fc = fopen(fname, "w+");
+		fprintf(fc,"%s\n",comprehension);
+		fclose(fc);
+		if (comprehension != NULL)
+		{
+			add_formula_to_schemas(fname,state,control);
+		}
+		else
+		{
+			//printf("\nNot valid for comprehension!");
+		}
+		
+		fc = fopen(fname, "w+");
+		fprintf(fc,"%s\n",replacement0);
+		fclose(fc);
+		if (replacement0 != NULL) 
+		{
+			//printf("\nThis is our replacement instance: %s\n",replacement);
+			add_formula_to_schemas(fname,state,control);
+		}
+		else
+		{
+			//printf("\nNot valid for replacement!");
+		}
+
+		fc = fopen(fname, "w+");
+		fprintf(fc,"%s\n",replacement1);
+		fclose(fc);
+		if (replacement1 != NULL) 
+		{
+			//printf("\nThis is our replacement instance: %s\n",replacement);
+			add_formula_to_schemas(fname,state,control);
+		}
+		else
+		{
+			//printf("\nNot valid for replacement!");
+		}
+		
+		free(replacement1);
+		free(replacement0);
+		free(comprehension);
+		//printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
+		
+		remove("currentformula.txt");
+		remove("processedclauses.txt");
+		//printf("\nleaving method\n");
+	}
+	printf("\nHow many elements of tmp_store are there after schemas added: %ld\n",state->tmp_store->members);
 	return 1;
 	
 }
@@ -1557,12 +1646,17 @@ void simplify_watchlist(ProofState_p state, ProofControl_p control,
 static void generate_new_clauses(ProofState_p state, ProofControl_p
                                  control, Clause_p clause, Clause_p tmp_copy)
 {
-   state->paramod_count += compute_schemas(control,
-									state->terms,
-									control->ocb,
-									clause,
-                                    state->tmp_store, state->freshvars,
-                                    state);
+	//generate new schema instances and add to tmp_store
+   if (GetTotalCPUTime()>3000000)
+   {
+	   state->paramod_count += compute_schemas(control,
+										state->terms,
+										control->ocb,
+										clause,
+										state->tmp_store, state->freshvars,
+										state);
+   }
+    //
    if(control->heuristic_parms.enable_eq_factoring)
    {
       state->factor_count+=
@@ -2662,7 +2756,19 @@ Clause_p Saturate(ProofState_p state, ProofControl_p control, long
       sat_check_step_limit = control->heuristic_parms.sat_check_step_limit,
       sat_check_ttinsert_limit = control->heuristic_parms.sat_check_ttinsert_limit;
 
-
+   //  Create the schema instances corresponding to any axioms and add them to tmp_store
+   //  This hurts performance so I'm commenting it out
+   
+   compute_schemas_set(control,
+						state->terms,
+						control->ocb,
+						state->axioms,
+						state->tmp_store, state->freshvars,
+						state);
+   
+   
+   
+   // Begin the proof procedure
    while(!TimeIsUp &&
          !ClauseSetEmpty(state->unprocessed) &&
          step_limit   > count &&
@@ -2675,6 +2781,7 @@ Clause_p Saturate(ProofState_p state, ProofControl_p control, long
          (!state->watchlist||!ClauseSetEmpty(state->watchlist)))
    {
       count++;
+      
       unsatisfiable = ProcessClause(state, control, answer_limit);
       if(unsatisfiable)
       {

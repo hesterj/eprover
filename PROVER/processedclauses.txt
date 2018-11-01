@@ -1,1 +1,0 @@
-fof(cmpi_0_27951,axiom,![A0]:?[A1]:![X1]:(member(X1,A1)<=>(member(X1,A0)& (subclass(X1,esk19_1(esk19_1(X1))))))).
