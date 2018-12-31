@@ -1,1 +1,0 @@
-cnf(i_0_75, plain, (~member(X3,X2)|~member(X1,X2)|~strict_order(X4,X2)|~member(unordered_pair(unordered_pair(X3,X3),unordered_pair(X3,unordered_pair(X1,X1))),X4)|~member(unordered_pair(unordered_pair(X1,X1),unordered_pair(X1,unordered_pair(X3,X3))),X4))).

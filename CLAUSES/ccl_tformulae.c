@@ -596,10 +596,21 @@ TFormula_p TFormulaLitAlloc(Eqn_p literal)
    TFormula_p res;
 
    assert(literal);
-
+   //John
+  // printf("\nEqn in TFormulaLitAlloc\n");
+   //EqnPrint(GlobalOut,literal,false,true);
+  // printf("\nLterm\n");
+  // TermPrint(GlobalOut,literal->lterm,literal->bank->sig,DEREF_NEVER);
+   //printf("\nRterm\n");
+   //TermPrint(GlobalOut,literal->rterm,literal->bank->sig,DEREF_NEVER);
+   //printf("\npos: %d",(int)literal->pos);
+   //printf("\neqnproperties: %d",(int)literal->properties);
+   //printf("\nPrinted eqn\n");
+   //
    res = EqnTermsTBTermEncode(literal->bank, literal->lterm,
                               literal->rterm, EqnIsPositive(literal),
                               PENormal);
+   
    return res;
 
 }
@@ -698,6 +709,7 @@ void TFormulaTPTPPrint(FILE* out, TB_p bank, TFormula_p form, bool fullterms, bo
 
    if(TFormulaIsLiteral(bank->sig, form))
    {
+	  //printf("\nLITERAL\n");
       Eqn_p tmp;
 
       assert(form->f_code == bank->sig->eqn_code ||
@@ -710,6 +722,7 @@ void TFormulaTPTPPrint(FILE* out, TB_p bank, TFormula_p form, bool fullterms, bo
    }
    else if(TFormulaIsQuantified(bank->sig,form))
    {
+      //printf("\nNOT L\n");
       FunCode quantifier = form->f_code;
       if(form->f_code == bank->sig->qex_code)
       {
@@ -741,6 +754,7 @@ void TFormulaTPTPPrint(FILE* out, TB_p bank, TFormula_p form, bool fullterms, bo
    }
    else if(TFormulaIsUnary(form))
    {
+	   //printf("\nNOT L\n");
       assert(form->f_code == bank->sig->not_code);
       fputs("~(", out);
       TFormulaTPTPPrint(out, bank, form->args[0], fullterms, pcl);
@@ -748,8 +762,8 @@ void TFormulaTPTPPrint(FILE* out, TB_p bank, TFormula_p form, bool fullterms, bo
    }
    else
    {
+	   //printf("\nNOT L\n");
       char* oprep = "XXX";
-
       assert(TFormulaIsBinary(form));
       fputs("(", out);
       if(form->f_code == bank->sig->or_code)
@@ -856,10 +870,12 @@ TFormula_p TFormulaTSTPParse(Scanner_p in, TB_p terms)
 
    if(TestInpTok(in, FOFAssocOp))
    {
+	  //printf("\nFOFAssocOP\n");
       res = assoc_tform_tstp_parse(in, terms, f1);
    }
    else if(TestInpTok(in, FOFBinOp))
    {
+	  //printf("\nFOFBinOP\n");
       op = tptp_operator_parse(terms->sig, in);
       f2 = literal_tform_tstp_parse(in, terms);
       res = TFormulaFCodeAlloc(terms, op, f1, f2);
@@ -1179,6 +1195,7 @@ TFormula_p TFormulaClauseEncode(TB_p bank, Clause_p clause)
    {
       //printf("Encoding: ");ClausePrintList(stdout, clause, true);printf("\n");
       res = TFormulaLitAlloc(clause->literals);
+      
       for(handle = clause->literals->next;
           handle;
           handle = handle->next)

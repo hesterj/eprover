@@ -994,15 +994,17 @@ long PDTreeDelete(PDTree_p tree, Term_p term, Clause_p clause)
    assert(tree->tree);
    assert(term);
    assert(clause);
-
-   /* printf("\nRemoving: ");
+   
+   /*
+    printf("\nRemoving: ");
    ClausePrint(stdout, clause, true);
    if(clause->literals)
    {
       printf("-- term: ");
       TBPrintTerm(stdout, clause->literals->bank, term, true);
    }
-   printf("\n"); */
+   printf("\n"); 
+   /*
 
    TermLRTraverseInit(tree->term_stack, term);
    node = tree->tree;

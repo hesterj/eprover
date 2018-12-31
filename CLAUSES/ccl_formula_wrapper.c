@@ -290,6 +290,7 @@ WFormula_p WFormulaTPTPParse(Scanner_p in, TB_p terms)
    AcceptInpTok(in, Comma);
 
    tform = TFormulaTPTPParse(in, terms);
+  
    handle = WTFormulaAlloc(terms, tform);
 
    AcceptInpTok(in, CloseBracket);

@@ -34,1141 +34,229 @@ PERF_CTR_DEFINE(BWRWTimer);
 /*                      Forward Declarations                           */
 /*---------------------------------------------------------------------*/
 
-static int append(char **str, const char *buf, int size);
-bool upperCase(char c);
-bool integer(char c);
-char* TSTPToString(Clause_p clause);
-long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clause,
-			  ClauseSet_p store, VarBank_p
-              freshvars, ProofState_p state);
-long compute_schemas_set(ProofControl_p control, TB_p bank, OCB_p ocb, ClauseSet_p handle,
-			  ClauseSet_p store, VarBank_p
-              freshvars, ProofState_p state);
-char* CNFFreeVariables(char *input);
-char* FOFFreeVariables(char *input);
-char* FreeVariables(Clause_p clause);
-void add_formula_to_schemas(char* fname, ProofState_p state,ProofControl_p control);
-int count_characters(const char *str, char character);
-char* Replacement(char *input, int whichrep);
-char* NewVariables(char *inp, int reporspec);
-char* Rep0 (char *var0,
-			char *var1,
-			char *var2,
-			char *var3,
-			char *var4,
-			char *var5,
-			char *var6,
-			char *strippedformula,
-			char *identifier
-			);
-char* Rep1 (char *var0,
-			char *var1,
-			char *var2,
-			char *var3,
-			char *var4,
-			char *var5,
-			char *var6,
-			char *strippedformula,
-			char *identifier
-			);
-char* Comprehension(char *input);
+
 void eval_clause_set_given(ProofState_p state, ProofControl_p control, ClauseSet_p set);
+long compute_schemas_tform(ProofControl_p control, 
+						   TB_p bank, 
+						   OCB_p ocb, 
+						   Clause_p clause,
+						   ClauseSet_p store, 
+						   VarBank_p freshvars, 
+						   ProofState_p state);
+TFormula_p tformula_comprehension(TB_p bank, 
+								  ProofState_p state, 
+								  PTree_p freevars, 
+								  TFormula_p input);
+ClauseSet_p tformula_replacement(TB_p bank, 
+								ProofState_p state, 
+								PTree_p freevars, 
+								TFormula_p input,
+								Clause_p clause);
+Clause_p ClauseMergeVars(Clause_p clause,  TB_p bank, Term_p x, Term_p y);
 /*  John's Functions
  * 
 */
 
-/* String append method to preserve sanity
- * 
- * 
- * 
- * 
- * 
- * 
-*/
-static int append(char **str, const char *buf, int size) {
-  char *nstr;
-  if (*str == NULL) {
-    nstr = malloc(size + 1);
-    memcpy(nstr, buf, size);
-    nstr[size] = '\0';
-  }
-  else {
-    if (asprintf(&nstr, "%s%.*s", *str, size, buf) == -1) return -1;
-    free(*str);
-  }
-  *str = nstr;
-  return 0;
-}
 
-/*  Returns a number of new variables depending on the input list.  The new variables are distinct from the input
- *  Number returned is FIVE with TWO inputs in the case of replacement
- *  Number returned is TWO with ONE input in the case of specification
- * 
- * reporspec = 0 is the replacement case, 1 is specification case
- *  John Hester
- * 
- * 
- * 
-*/
 
-char *NewVariables(char *variables, int reporspec)
+//Redo of everything above but using E internal methods rather than printing to file (slow)
+
+long compute_schemas_tform(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clause,
+			  ClauseSet_p store, VarBank_p
+              freshvars, ProofState_p state) 
 {
-	//  Replacement case
-	if (reporspec == 0) 
+	if (clause->properties == CPIsSchema)
 	{
-		char *newvars = calloc(200, sizeof(char));
-		char d;
-		//printf("\nTwo free variables!\n");
-		char c1 = variables[0];
-		char c2 = variables[3];
-		for (int i =65;i<91;i++)
-		{
-			if (i != c1 && i != c2)
-			{
-				//printf("%c\n",i);
-				d = i;
-				break;
-			}
-		}
-		for (int i=48;i<53;i++)
-		{
-			char temp[3] = {d,i,','};
-			strcat(newvars,temp);
-		}
-		newvars[14] = 0;
-		return newvars;
-	}
-	//  Comprehension case
-	else if (reporspec == 1)
-	{
-		char *newvars = calloc(200, sizeof(char));
-		char d;
-		char c1 = variables[0];
-		for (int i =65;i<91;i++)
-		{
-			if (i != c1)
-			{
-				d = i;
-				break;
-			}
-		}
-		for (int i=48;i<50;i++)
-		{
-			char temp[3] = {d,i,','};
-			strcat(newvars,temp);
-		}
-		newvars[5] = 0;
-		return newvars;
-	}
-	else return NULL;
-}
-
-
-/*  Replace substring with another...
- * 
- * 
- * 
- * 
- * 
-*/
-
-char *strncpy2(char *dest, const char *src, size_t n)
-{
-    char *ret = dest;
-    do {
-        if (!n--)
-            return ret;
-    } while (*dest++ = *src++);
-    while (n--)
-        *dest++ = 0;
-    return ret;//28098
-}
-
-char *replace_str(char *str, char *orig, char *rep)
-{
-  static char buffer[4096];
-  char *p;
-
-  if(!(p = strstr(str, orig)))  // Is 'orig' even in 'str'?
-    return str;
-
-  strncpy2(buffer, str, p-str); // Copy characters from 'str' start to 'orig' st$
-  buffer[p-str] = '\0';
-
-  sprintf(buffer+(p-str), "%s%s", rep, p+strlen(orig));
-
-  return buffer;
-}
-
-/* Counts the characters in a string...
- * 
-*/
-
-int count_characters(const char *str, char character)
-{
-    const char *p = str;
-    int count = 0;
-
-    do {
-        if (*p == character)
-            count++;
-    } while (*(p++));
-
-    return count;
-}
-
-/* John Hester
- * 
- * Check if character is uppercase...
- * 
- * 
-*/
-
-bool upperCase(char c)
-{
-	if (c >= 'A' && c <= 'Z') {
-		return true;
-	}
-	return false;
-}
-
-/*
- *  Replacement instace for phi(x,y)
- * 
- *  John Hester
- * 
-*/
-
-char* Rep0 (char *var0,
-			char *var1,
-			char *var2,
-			char *var3,
-			char *var4,
-			char *var5,
-			char *var6,
-			char *strippedformula,
-			char *identifier
-			)
-{
-	char *replacement = calloc(1000,sizeof(char));
-	strcat(replacement,"![");
-	strcat(replacement,var0);
-	strcat(replacement,"]:?[");
-	strcat(replacement,var1);
-	strcat(replacement,"]:![");
-	strcat(replacement,var2);
-	strcat(replacement,"]:(");
-	char *phiv0v2 = strippedformula;
-	while (strstr(phiv0v2,var1))
-	{
-		phiv0v2 = replace_str(phiv0v2,var1,var2);
-	}
-	strcat(replacement,phiv0v2);
-	strcat(replacement,"<=>(");
-	strcat(replacement,var2);
-	strcat(replacement,"=");
-	strcat(replacement,var1);
-	strcat(replacement,"))=>(![");
-	// here begins the conclusion (and preceding line)
-	strcat(replacement,var3);
-	strcat(replacement,"]:?[");
-	strcat(replacement,var4);
-	strcat(replacement,"]:![");
-	strcat(replacement,var5);
-	strcat(replacement,"]:(member(");
-	strcat(replacement,var5);
-	strcat(replacement,",");
-	strcat(replacement,var4);
-	strcat(replacement,")<=>?[");
-	strcat(replacement,var6);
-	strcat(replacement,"]:(member(");
-	strcat(replacement,var6);
-	strcat(replacement,",");
-	strcat(replacement,var3);
-	strcat(replacement,")&");
-	char *phiv6v5 = strippedformula;
-	while (strstr(phiv6v5,var0))
-	{
-		phiv6v5 = replace_str(phiv6v5,var0,var6);
-	}
-	while (strstr(phiv6v5,var1))
-	{
-		phiv6v5 = replace_str(phiv6v5,var1,var5);
-	}
-	strcat(replacement,phiv6v5);
-	strcat(replacement,")))).");
-	
-	char *fof;
-	fof = calloc(1100,sizeof(char));
-	strcat(fof,"fof(rpm");
-	strcat(fof,identifier);
-	strcat(fof,",axiom,");
-	strcat(fof,replacement);
-	free(replacement);
-	return fof;
-}
-
-/*
- *  Replacement instace for phi(y,x)
- * 
- *  John Hester
- * 
-*/
-
-char* Rep1 (char *var0,
-			char *var1,
-			char *var2,
-			char *var3,
-			char *var4,
-			char *var5,
-			char *var6,
-			char *strippedformula,
-			char *identifier
-			)
-{
-	char *replacement = calloc(1000,sizeof(char));
-	strcat(replacement,"![");
-	strcat(replacement,var0);
-	strcat(replacement,"]:?[");
-	strcat(replacement,var1);
-	strcat(replacement,"]:![");
-	strcat(replacement,var2);
-	strcat(replacement,"]:((");
-	char *phiv2v0 = strippedformula;
-	while (strstr(phiv2v0,var0))
-	{
-		phiv2v0 = replace_str(phiv2v0,var0,var2);
-	}
-	while (strstr(phiv2v0,var1))
-	{
-		phiv2v0 = replace_str(phiv2v0,var1,var0);
-	}
-	strcat(replacement,phiv2v0);
-	strcat(replacement,")<=>(");
-	strcat(replacement,var2);
-	strcat(replacement,"=");
-	strcat(replacement,var1);
-	strcat(replacement,"))=>(![");
-	// here begins the conclusion (and preceding line)
-	strcat(replacement,var3);
-	strcat(replacement,"]:?[");
-	strcat(replacement,var4);
-	strcat(replacement,"]:![");
-	strcat(replacement,var5);
-	strcat(replacement,"]:(member(");
-	strcat(replacement,var5);
-	strcat(replacement,",");
-	strcat(replacement,var4);
-	strcat(replacement,")<=>?[");
-	strcat(replacement,var6);
-	strcat(replacement,"]:(member(");
-	strcat(replacement,var6);
-	strcat(replacement,",");
-	strcat(replacement,var3);
-	strcat(replacement,")&");
-	char *phiv5v6 = strippedformula;
-	while (strstr(phiv5v6,var0))
-	{
-		phiv5v6 = replace_str(phiv5v6,var0,var5);
-	}
-	while (strstr(phiv5v6,var1))
-	{
-		phiv5v6 = replace_str(phiv5v6,var1,var6);
-	}
-	strcat(replacement,phiv5v6);
-	strcat(replacement,")))).");
-	
-	char *fof;
-	fof = calloc(1100,sizeof(char));
-	strcat(fof,"fof(rpm");
-	strcat(fof,identifier);
-	strcat(fof,",axiom,");
-	strcat(fof,replacement);
-	free(replacement);
-	return fof;
-}
-
-/* John Hester
- * 
- * Check if character is integer...
- * 
- * 
-*/
-
-bool integer(char c)
-{
-	if (c >= '0' && c <= '9') {
-		return true;
-	}
-	return false;
-}
-
-/*  Actually creates the parameter-free comprehension instance
- *  First checks if the input has exactly one free variables, then builds it
- *  Returns null if the inference is not possible, else returns the string of the comprehension instance
- *  Only works for variables with one following integer
- * CURRENTLY ONLY WORKS WITH CNF
- *  John Hester
- * 
- * If we get proofs:  investigate X!=B restriction in the note.  I think this is correct but not entirely certain.
-*/
-
-char* Comprehension(char *input) 
-{
-	
-	char *variables = CNFFreeVariables(input);
-	
-	//printf("\nThis is our list of variables: %s\n",variables);
-	
-	if (!variables || variables[0] == '\0') 
-	{
-		free(variables);
-		//printf("\nNo variables!\n");
-		return NULL;  // make sure we actually have some variables...
-	}
-	char *newvariables;
-	char *strippedformula = NULL;
-	char *identifier = NULL;
-	int count = count_characters(variables, ',');
-	
-	if (count != 0) 
-	{
-		free(variables);
-		return NULL;
-	}
-	//Now we need to remove the identifiers from the formula
-	int length = strlen(input);
-	int commacount = 0;
-	int parencount = 0;
-	
-	for (int i=0;i<length;i++)   //  separate the formula and the identifier
-	{		
-		if (input[i] == ',')
-		{ 
-			commacount += 1;
-			if (commacount == 2) continue;
-		}
-		if (input[i] == '(')
-		{
-			parencount += 1;
-			if (parencount == 1) continue;
-		}
-		
-		if (parencount == 1 && commacount == 0)
-		{
-			char temp[2] = {input[i]};
-			append(&identifier,temp,1);
-		}
-		if (commacount > 1)
-		{
-			if (input[i] == '.') break;
-			char temp[2] = {input[i]};
-			append(&strippedformula,temp,1);
-		}
-	}
-	int lenstrip = strlen(strippedformula);
-	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
-	
-	//printf("\nCOMPREHENSION IDENTIFIER: %s\n", identifier);
-	//printf("COMPREHENSION STRIPPEDFORMULA: %s\n", strippedformula);
-	
-	//  List out the variables
-	
-	newvariables = NewVariables(variables,1);
-	
-	char c0 = variables[0];
-	char c1 = newvariables[0];
-	char c2 = newvariables[3];
-	char d0 = variables[1];
-	char d1 = newvariables[1];
-	char d2 = newvariables[4];
-	char var0[3] = {c0,d0};
-	char var1[3] = {c1,d1};
-	char var2[3] = {c2,d2};
-	
-	free(newvariables);
-	free(variables);
-	char *fof;
-	
-	char *comprehension = calloc(1500,sizeof(char));
-	strcat(comprehension,"fof(cmp");
-	strcat(comprehension,identifier);
-	strcat(comprehension,",axiom,");
-	strcat(comprehension,"![");
-	strcat(comprehension,var1);
-	strcat(comprehension,"]:?[");
-	strcat(comprehension,var2);
-	strcat(comprehension,"]:![");
-	strcat(comprehension,var0);
-	strcat(comprehension,"]:(");
-	strcat(comprehension,"member(");
-	strcat(comprehension,var0);
-	strcat(comprehension,",");
-	strcat(comprehension,var2);
-	strcat(comprehension,")<=>(member(");
-	strcat(comprehension,var0);
-	strcat(comprehension,",");
-	strcat(comprehension,var1);
-	strcat(comprehension,")&");
-	strcat(comprehension,strippedformula);
-	strcat(comprehension,"))).");
-	
-	//printf("This is the generated comprehension instance (added to state):\n%s\n",comprehension);
-	
-	free(strippedformula);
-	free(identifier);
-	return comprehension;
-}
-
-/*  Actually creates the parameter-free replacement instance
- *  First checks if the input has exactly two free variables, then builds it
- *  Returns null if the inference is not possible, else returns the REPL0 string
- *  Only works for variables with one following integer
- * CURRENTLY ONLY WORKS WITH CNF
- * whichrep determines to do replacement for phi(x,y) or phi(y,x)
- *  John Hester
- * 
-*/
-
-char* Replacement(char *input, int whichrep) 
-{
-	
-	char *variables = CNFFreeVariables(input);
-	
-	//printf("\nThis is our list of variables: %s\n",variables);
-	
-	if (!variables) 
-	{
-		free(variables);
-		return NULL;  // make sure we actually have some variables...
-	}
-	char *newvariables;
-	char *strippedformula = NULL;
-	char *identifier = NULL;
-	int count = count_characters(variables, ',');
-	
-	if (count != 1) 
-	{
-		free(variables);
-		return NULL;
-	}
-	//Now we need to remove the identifiers from the formula
-	int length = strlen(input);
-	int commacount = 0;
-	int parencount = 0;
-	
-	for (int i=0;i<length;i++)   //  separate the formula and the identifier
-	{		
-		if (input[i] == ',')
-		{ 
-			commacount += 1;
-			if (commacount == 2) continue;
-		}
-		if (input[i] == '(')
-		{
-			parencount += 1;
-			if (parencount == 1) continue;
-		}
-		
-		if (parencount == 1 && commacount == 0)
-		{
-			char temp[2] = {input[i]};
-			append(&identifier,temp,1);
-			
-		}
-		if (commacount > 1)
-		{
-			if (input[i] == '.') break;
-			char temp[2] = {input[i]};
-			append(&strippedformula,temp,1);
-		}
-	}
-	int lenstrip = strlen(strippedformula);
-	strippedformula[lenstrip-1] = 0;  //delete the extra parenthesis
-	
-	//printf("\IDENTIFIER: %s\n", identifier);
-	//printf("\STRIPPEDFORMULA: %s\n", strippedformula);
-	
-	//  List out the variables
-	
-	newvariables = NewVariables(variables,0);
-	
-	char c0 = variables[0];
-	char c1 = variables[3];
-	char c2 = newvariables[0];
-	char c3 = newvariables[3];
-	char c4 = newvariables[6];
-	char c5 = newvariables[9];
-	char c6 = newvariables[12];
-	char d0 = variables[1];
-	char d1 = variables[4];
-	char d2 = newvariables[1];
-	char d3 = newvariables[4];
-	char d4 = newvariables[7];
-	char d5 = newvariables[10];
-	char d6 = newvariables[13];
-	char var0[3] = {c0,d0};
-	char var1[3] = {c1,d1};
-	char var2[3] = {c2,d2};
-	char var3[3] = {c3,d3};
-	char var4[3] = {c4,d4};
-	char var5[3] = {c5,d5};
-	char var6[3] = {c6,d6};
-	
-	free(newvariables);
-	free(variables);
-	char *fof;
-	
-	if (whichrep == 0)
-	{
-		fof = Rep0(var0,var1,var2,var3,var4,var5,var6,strippedformula,identifier);
-	}
-	else
-	{
-		fof = Rep1(var0,var1,var2,var3,var4,var5,var6,strippedformula,identifier);
+		printf("\nSelected schema instance\n");
 	}
 	
-	//printf("This is the generated replacement instance (added to state):\n%s\n",fof);
-	free(strippedformula);
-	free(identifier);
-	
-	//return input;
-	return fof;
-}
-
-
-/*  Returns a comma separated string of the FREE variables of a FOF expression
- *  Only call if it's FOF!!!
- * 
- *  DEPRECATED!!!!  COPY THE CNF VERSION WITH NECESSARY FOF CHANGES
- * 
- * 
-*/
-
-char* FOFFreeVariables(char *input)
-{
-	char *output = malloc(sizeof(char) * 1);
-	int capacity = 1;
-	int length_of_formula = 0;
-	int size = strlen(input);
-	bool reading = false;
-	
-	if (input[0]=='f') 
-	{
-		for (int i = 3;i<size;i++) {
-			if (input[i] == '.' || input[i] == ']') break;
-			if (input[i] == '!') reading = true;
-			if (upperCase(input[i]) == true && reading == true) 
-			{
-				if (capacity == length_of_formula)
-					{
-						capacity = 2 * length_of_formula;
-						output = realloc(output, capacity * sizeof(char));
-					}
-				output[length_of_formula] = input[i];
-				length_of_formula += 1;
-				// Now we need to check for trailing integer variable identifiers and add them to output
-				for (int d = i+1;d<size; d++) 
-				{
-					if (integer(input[d]) == true) 
-					{
-						if (capacity == length_of_formula)
-						{
-							capacity = 2 * length_of_formula;
-							output = realloc(output, capacity * sizeof(char));
-						}
-						output[length_of_formula] = input[d];
-						length_of_formula += 1;
-					}
-					else 
-					{
-						if (capacity == length_of_formula)
-						{
-							capacity = 2 * length_of_formula;
-							output = realloc(output, capacity * sizeof(char));
-						}
-						output[length_of_formula] = ',';
-						length_of_formula += 1;
-						break;						
-					}
-					
-				}
-				
-			}
-			// At this point we should have found all of the variables with identifiers and put it all in to a comma separated list
-			// Null terminate it
-			if (capacity == length_of_formula)
-			{
-				capacity = length_of_formula+1;
-				output = realloc(output, capacity * sizeof(char));
-			}
-			output[length_of_formula] = 0;
-		}
-	}
-	else
-	{
-		printf("\nCalling FOF free variables on something that is not a fof...\n");
-	}
-	
-	
-	////////////////////////////////////////////////
-	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
-	char *final = NULL;
-	
-	const char s[2] = ",";
-	char *token;
-    token = strtok(output, s);
-    while( token != NULL ) 
-    {
-		if (strstr(final,token) == 0)
-		{
-			char *p = ",";
-			strcat(final,token);
-			strcat(final,p);
-		}
-		token = strtok(NULL, s);
-	}
-	//  null terminate the string to be safe
-	int length = strlen(final);
-	final[length-1]=0;
-	
-	free(output);
-	return final;
-}
-
-/*  Returns a comma separated string of the FREE variables of a CNF expression
- *  Only call if it's CNF!!!
- * 
- *  John Hester
- * 
- * 
-*/
-
-char* CNFFreeVariables(char *input)
-{
-	char *output = malloc(sizeof(char) * 1);
-	int capacity = 1;
-	int length_of_formula = 0;
-	int size = strlen(input);
-	
-	if (input[0]=='c') 
-	{
-		for (int i = 3;i<size;i++) {
-			if (input[i] == '.') break;
-			else if (upperCase(input[i]) == true) 
-			{
-				if (capacity == length_of_formula)
-					{
-						capacity = 2 * length_of_formula;
-						output = realloc(output, capacity * sizeof(char));
-					}
-				output[length_of_formula] = input[i];
-				length_of_formula += 1;
-				// Now we need to check for trailing integer variable identifiers and add them to output
-				for (int d = i+1;d<size; d++) 
-				{
-					if (integer(input[d]) == true) 
-					{
-						if (capacity == length_of_formula)
-						{
-							capacity = 2 * length_of_formula;
-							output = realloc(output, capacity * sizeof(char));
-						}
-						output[length_of_formula] = input[d];
-						length_of_formula += 1;
-					}
-					else 
-					{
-						if (capacity == length_of_formula)
-						{
-							capacity = 2 * length_of_formula;
-							output = realloc(output, capacity * sizeof(char));
-						}
-						output[length_of_formula] = ',';
-						length_of_formula += 1;
-						break;						
-					}
-					
-				}
-				
-			}
-			// At this point we should have found all of the variables with identifiers and put it all in to a comma separated list
-			// Null terminate it
-			if (capacity == length_of_formula)
-			{
-				capacity = length_of_formula+1;
-				output = realloc(output, capacity * sizeof(char));
-			}
-			output[length_of_formula] = 0;
-		}
-	}
-	else
-	{
-		printf("\nCalling CNF free variables on something that is not a cnf...\n");
-	}
-	
-	////////////////////////////////////////////////
-	// This deletes all duplicates... Risk of overflow if the collection of variables ends up being of size more than 100
-	char *final = calloc(200, sizeof(char));
-	const char s[2] = ",";
-	char *token;
-    token = strtok(output, s);
-
-	while( token != NULL ) 
-	{
-		if (strstr(final,token) == 0)
-		{
-			int strlentoken = strlen(token);
-			append(&final,token,strlentoken);
-			append(&final,s,1);
-		}
-		token = strtok(NULL, s);
-	}
-	//  null terminate the string to be safe
-	int length = 0;
-	if(final)
-	{
-		length = strlen(final);
-	}
-	if (length!=0)
-	{
-		final[length-1]=0;
-	}
-	free(output);
-	return final;
-}
-
-/* John Hester
- * 
- *  Takes an input formula in TPTP fromat and returns the symbols for "free" variables
- *  Here "free" for fof means universally quantified over with scope the entire formula
- *  For cnf free means not quantified over...
- * 
- *  The return type is a comma separated string
- *
-*/
-
-char* FreeVariables(Clause_p clause)
-{
-	
-	char *input = TSTPToString(clause);
-	char *output;
-	
-	//printf("\nsize: %d\n", size);
-	if (input[0]=='c') 
-	{
-		output = CNFFreeVariables(input);
-	}
-	else if (input[0]=='f')
-	{
-		output = FOFFreeVariables(input);
-	}
-	else
-	{
-		printf("\nError in variables!!\n");
-	}
-	
-	
-	//printf("This is the string of variables found, with duplicates removed: %s\n",output);
-	
-	return output;
-}
-
-/* John Hester
- * 
- * Prints clause to a file in TPTP format, reads it as a string, returns it for manipulation
- * 
- * 
- * 
- * 
- *
-*/
-
-char* TSTPToString(Clause_p clause) 
-{
-	//printf("computing all comprehensions call test\n");
-	FILE *fp = fopen("currentformula.txt", "wb+");
-	ClauseTSTPPrint(fp,clause,1,1);  //This is necessary because it is where we read the current clause from!
-	fprintf(fp,"\n");
-	
-	rewind(fp);
-	
-	char *formula = malloc(sizeof(char) * 1);
-	int capacity = 1;
-	int length_of_formula = 0;
-	int terminate_string_with_null = 0;
-	
-	/////////////////////////  Read the current formula that has been printed to fp
-
-	do
-	{
-		if (capacity == length_of_formula)
-		{
-			capacity = 2 * length_of_formula;
-			formula = realloc(formula, capacity * sizeof(char));
-		}
-		if (terminate_string_with_null == 1)
-		{
-			formula[length_of_formula] = 0;
-			break;
-		}
-		int ch = fgetc(fp);
-		if (ch == -1) 
-		{
-			if (formula[length_of_formula-1] != '.')
-			{
-				//printf("\nRead end of file without a preceding period!!!!\n");
-			}
-		}
-		char casted = (char) ch;
-		formula[length_of_formula] = casted;
-		if (casted == '.')
-		{
-			terminate_string_with_null = 1;
-		}
-		length_of_formula += 1;
-	}
-	while(1);
-	fclose(fp);
-	return formula;
-}
-
-/*  John Hester
- * 
- *  Reads target file determined by fname and adds the TPTP format clauses/formulas in them to the schemas of state
- *  
- * 
- *
- * 
-*/
-
-void add_formula_to_schemas(char* fname, ProofState_p state, ProofControl_p control) 
-{
-	Scanner_p in;
-	Clause_p tobeevaluated;
-	StrTree_p skip_includes = NULL;
+	long numfreevars = 0;
+	long res = 0;
+	TFormula_p clauseasformula;
+	TFormula_p schemaformula;
+	WFormula_p schemaaswformula;
+	PTree_p freevars = PTreeCellAllocEmpty();
 	ClauseSet_p final = ClauseSetAlloc();
-	WFormula_p form;
-	long res;
+	Clause_p tobeevaluated;
+	Clause_p clausecopy = ClauseCopy(clause,bank);
 	
-	in = CreateScanner(StreamTypeFile,fname,true,NULL);
-	IOFormat format = TSTPFormat;
-	ScannerSetFormat(in, format);
-	if(TestInpId(in, "input_formula|fof|tff|tcf"))
-	   {
-		  form = WFormulaParse(in, state->terms);
-		  res = WFormulaCNF(form,final,state->terms,state->freshvars);
-	   }
-	//printf("\nEvaluating schema instances and adding them state->tmp_store\n");
-	while (tobeevaluated = ClauseSetExtractFirst(final))
+	clauseasformula = TFormulaClauseEncode(bank, clausecopy);
+	TFormulaCollectFreeVars(bank, clauseasformula, freevars);
+	numfreevars = PTreeNodes(freevars);
+	
+	if (numfreevars == 2)  //Comprehension
 	{
-	  //ClauseSetExtractEntry(tobeevaluated);
-      ClauseSetIndexedInsertClause(state->tmp_store, tobeevaluated);
-      HCBClauseEvaluate(control->hcb, tobeevaluated);
+		schemaformula = tformula_comprehension(bank, state, freevars, clauseasformula);
+		schemaaswformula = WTFormulaAlloc(bank,schemaformula);
+		res = WFormulaCNF(schemaaswformula,final,state->terms,state->freshvars);
+		//printf("\nC clauses: %ld\n",res);
+		while (tobeevaluated = ClauseSetExtractFirst(final))
+		{
+		  //printf("\n@ ");
+		  //ClausePrint(GlobalOut,tobeevaluated,true);
+		  tobeevaluated->properties = CPIsSchema;
+		  ClauseSetIndexedInsertClause(state->tmp_store, tobeevaluated);
+		  HCBClauseEvaluate(control->hcb, tobeevaluated);
+		}
+		WFormulaCellFree(schemaaswformula);
+		//printf("\nSuccessful comprehension\n");
 	}
 	
-	// Select the schema instance with best standard weight, add it to tmp_store
-	//printf("\n# of elements of schemas: %ld\n",state->schemas->members);
-	//ClauseSetFVIndexify(state->schemas);
-	/*
-	Clause_p selected = control->hcb->hcb_select(control->hcb,
-                                     state->schemas);
-    if (!selected)
-    {
-		DestroyScanner(in);
-		FormulaSetFree(tempformulas);
-		ClauseSetFree(final);
-		return;
+	
+	else if (numfreevars == 3) // Replacement
+	{
 		
+		final = tformula_replacement(bank,state,freevars,clauseasformula,clausecopy);
+		
+		while (tobeevaluated = ClauseSetExtractFirst(final))
+		{
+		  //printf("\n@ ");
+		  //ClausePrint(GlobalOut,tobeevaluated,true);
+		  tobeevaluated->properties = CPIsSchema;
+		  ClauseSetIndexedInsertClause(state->tmp_store, tobeevaluated);
+		  HCBClauseEvaluate(control->hcb, tobeevaluated);
+		  //printf("\nevaluated");
+		}
+		WFormulaCellFree(schemaaswformula);
+		//printf("\nSuccessful replacement\n");
 	}
-	*/
-    //printf("This is the hcb selected clause from state->schemas:\n");
-    //ClausePrint(GlobalOut,selected,true);
-    //ClauseSetExtractEntry(selected);
-    /*
-	selected->pred->succ = selected->succ;
-	selected->succ->pred = selected->pred;
-	state->tmp_store->anchor->pred->succ = selected;
-	state->tmp_store->anchor->pred = selected;
-	selected->set = state->tmp_store;
-	*/
-	//ClauseSetIndexedInsertClause(state->tmp_store,selected);
+
+	ClauseSetFree(final);
+	ClauseFree(clausecopy);
+	PTreeFree(freevars);
 	
-	
-    DestroyScanner(in);
-    ClauseSetFree(final);
-    //printf("\nSuccessfully added schema to tmp_store\n");
+	return 0;
 }
 
-/*	Compute ALL ZFC comprehension instances with the given clause.  Add them to tmp_store.
- *  John Hester
- * 
- * 	Parts Taken from ClauseTSTPPrint in order to get string
- * 
- *  WFormulaTPTPParse provides input in to WFormula_p format
- *  WFormClauseToClause provides transformation from WFormula_p to Clause_p format
- *  Both in ccl_formula_wrapper.c
- *  look at TBPrintTermFull, TBPrintTerm
- * 
- *  parent alias seems to be same as clause but with different name for variables
-*/
+//  Compute comprehension instance for TFormula_p with ONE free variable
 
-long compute_schemas(ProofControl_p control, TB_p bank, OCB_p ocb, Clause_p clause,
-			  ClauseSet_p store, VarBank_p
-              freshvars, ProofState_p state) 
+TFormula_p tformula_comprehension(TB_p bank, ProofState_p state, PTree_p freevars, TFormula_p input)
 {
-	char *formula = TSTPToString(clause);
-	char *replacement0;
-	replacement0 = Replacement(formula,0);
-	char *replacement1;
-	replacement1 = Replacement(formula,1);
-	char *comprehension;
-	comprehension = Comprehension(formula);
-	free(formula);
+	void* pointer = PTreeExtractRootKey(freevars);
+	FunCode member = SigFindFCode(state->signature, "member");
+	//TFormula_p new = TFormulaCopy(bank,input);
 	
-	if (replacement0 == NULL && comprehension == NULL)
+	if (pointer == NULL)
 	{
-		//printf("\nNot one or two free variables.");
-		free(replacement0);
-		free(replacement1);
-		free(comprehension);
-		return 0;
+		printf("\nNULL pointer\n");
 	}
 	
-	char *fname = "processedclauses.txt";
-	FILE *fc = fopen(fname, "w+");
-	fprintf(fc,"%s\n",comprehension);
-	fclose(fc);
-	if (comprehension != NULL)
-	{
-		add_formula_to_schemas(fname,state,control);
-	}
-	else
-	{
-		//printf("\nNot valid for comprehension!");
-	}
+	TFormula_p freevariable = (TFormula_p) pointer;
 	
-	fc = fopen(fname, "w+");
-	fprintf(fc,"%s\n",replacement0);
-	fclose(fc);
-	if (replacement0 != NULL) 
-	{
-		//printf("\nThis is our replacement instance: %s\n",replacement);
-		add_formula_to_schemas(fname,state,control);
-	}
-	else
-	{
-		//printf("\nNot valid for replacement!");
-	}
-
-	fc = fopen(fname, "w+");
-	fprintf(fc,"%s\n",replacement1);
-	fclose(fc);
-	if (replacement1 != NULL) 
-	{
-		//printf("\nThis is our replacement instance: %s\n",replacement);
-		add_formula_to_schemas(fname,state,control);
-	}
-	else
-	{
-		//printf("\nNot valid for replacement!");
-	}
+	TFormula_p a = VarBankGetFreshVar(state->freshvars,freevariable->sort);
+	TFormula_p b = VarBankGetFreshVar(state->freshvars,freevariable->sort);
 	
-	free(replacement1);
-	free(replacement0);
-	free(comprehension);
-	//printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
+	TFormula_p xina = TFormulaFCodeAlloc(bank,member,freevariable,a);
+	TFormula_p xinb = TFormulaFCodeAlloc(bank,member,freevariable,b);
 	
-	remove("currentformula.txt");
-	remove("processedclauses.txt");
-	//printf("\nleaving method\n");
-	return 1;
+	Eqn_p xina_eq = EqnAlloc(xina,bank->true_term,bank,true);
+	Eqn_p xinb_eq = EqnAlloc(xinb,bank->true_term,bank,true);
 	
+	TFormula_p xina_f = TFormulaLitAlloc(xina_eq);
+	TFormula_p xinb_f = TFormulaLitAlloc(xinb_eq);
+	
+	input = TFormulaFCodeAlloc(bank,bank->sig->and_code,xina_f,input);
+	input = TFormulaFCodeAlloc(bank,bank->sig->equiv_code,xinb_f,input);
+	input = TFormulaAddQuantor(bank,input,true,freevariable);
+	input = TFormulaAddQuantor(bank,input,false,b);
+	input = TFormulaAddQuantor(bank,input,true,a);
+	
+	EqnFree(xina_eq);
+	EqnFree(xinb_eq);
+	
+	return input;
 }
 
-//Same as above but, for all clauses in the set
-
-long compute_schemas_set(ProofControl_p control, TB_p bank, OCB_p ocb, ClauseSet_p handle,
-			  ClauseSet_p store, VarBank_p
-              freshvars, ProofState_p state) 
+ClauseSet_p tformula_replacement(TB_p bank, ProofState_p state, PTree_p freevars, TFormula_p input, Clause_p clause)
 {
-	Clause_p clause;
-	printf("\nHow many axioms do we have: %ld\n",state->axioms->members);
-	printf("How many elements of tmp_store are there: %ld\n",state->tmp_store->members);
-	for(clause = state->axioms->anchor->succ;
-		clause != state->axioms->anchor;
-		clause = clause->succ)
-	{
-		char *formula = TSTPToString(clause);
-		char *replacement0;
-		replacement0 = Replacement(formula,0);
-		char *replacement1;
-		replacement1 = Replacement(formula,1);
-		char *comprehension;
-		comprehension = Comprehension(formula);
-		free(formula);
-		
-		if (replacement0 == NULL && comprehension == NULL)
-		{
-			//printf("\nNot one or two free variables.");
-			free(replacement0);
-			free(replacement1);
-			free(comprehension);
-			continue;
-		}
-		
-		char *fname = "processedclauses.txt";
-		FILE *fc = fopen(fname, "w+");
-		fprintf(fc,"%s\n",comprehension);
-		fclose(fc);
-		if (comprehension != NULL)
-		{
-			add_formula_to_schemas(fname,state,control);
-		}
-		else
-		{
-			//printf("\nNot valid for comprehension!");
-		}
-		
-		fc = fopen(fname, "w+");
-		fprintf(fc,"%s\n",replacement0);
-		fclose(fc);
-		if (replacement0 != NULL) 
-		{
-			//printf("\nThis is our replacement instance: %s\n",replacement);
-			add_formula_to_schemas(fname,state,control);
-		}
-		else
-		{
-			//printf("\nNot valid for replacement!");
-		}
-
-		fc = fopen(fname, "w+");
-		fprintf(fc,"%s\n",replacement1);
-		fclose(fc);
-		if (replacement1 != NULL) 
-		{
-			//printf("\nThis is our replacement instance: %s\n",replacement);
-			add_formula_to_schemas(fname,state,control);
-		}
-		else
-		{
-			//printf("\nNot valid for replacement!");
-		}
-		
-		free(replacement1);
-		free(replacement0);
-		free(comprehension);
-		//printf("\nHow many axioms are now in state? %ld\n",state->axioms->members);
-		
-		remove("currentformula.txt");
-		remove("processedclauses.txt");
-		//printf("\nleaving method\n");
-	}
-	printf("\nHow many elements of tmp_store are there after schemas added: %ld\n",state->tmp_store->members);
-	return 1;
+	void* pointer0 = PTreeExtractRootKey(freevars);
+	void* pointer1 = PTreeExtractRootKey(freevars);
+	FunCode member = SigFindFCode(state->signature, "member");
+	ClauseSet_p final = ClauseSetAlloc();
+	//Subst_p binder = SubstAlloc();
 	
+	if (pointer0 == NULL || pointer1 == NULL)
+	{
+		printf("\nNULL pointer\n");
+	}
+	
+	TFormula_p temp1 = TFormulaCopy(bank,input);
+	TFormula_p temp2 = TFormulaCopy(bank,input);
+	
+	
+	TFormula_p x = (TFormula_p) pointer0;
+	TFormula_p y = (TFormula_p) pointer1;
+	
+	TFormula_p a = VarBankGetFreshVar(state->freshvars,x->sort);
+	TFormula_p b = VarBankGetFreshVar(state->freshvars,x->sort);
+	
+	TFormula_p c = VarBankGetFreshVar(state->freshvars,x->sort); //
+	//TFormula_p phi2 = tformula_substitute_variable(temp1,y,c);
+	
+	
+	Clause_p substitutedclause = ClauseMergeVars(clause, bank, y, c);
+	
+	TFormula_p phi2 = TFormulaClauseEncode(bank, substitutedclause);
+	
+	TFormula_p xina = TFormulaFCodeAlloc(bank,member,x,a);
+	Eqn_p xina_eq = EqnAlloc(xina,bank->true_term,bank,true);
+	TFormula_p xina_f = TFormulaLitAlloc(xina_eq);
+	
+	temp2 = TFormulaFCodeAlloc(bank,bank->sig->and_code,xina_f,temp2);
+	temp2 = TFormulaAddQuantor(bank,temp2,false,a);
+	
+	TFormula_p yinb = TFormulaFCodeAlloc(bank,member,y,b);
+	Eqn_p yinb_eq = EqnAlloc(yinb,bank->true_term,bank,true);
+	TFormula_p yinb_f = TFormulaLitAlloc(yinb_eq);
+	
+	temp2 = TFormulaFCodeAlloc(bank,bank->sig->equiv_code,yinb_f,temp2);
+	temp2 = TFormulaAddQuantor(bank,temp2,true,y);
+	temp2 = TFormulaAddQuantor(bank,temp2,false,b);
+	temp2 = TFormulaAddQuantor(bank,temp2,true,a);
+	
+	TFormula_p yeqc = TFormulaFCodeAlloc(bank,bank->sig->eqn_code,y,c);
+	
+	phi2 = TFormulaFCodeAlloc(bank,bank->sig->equiv_code,phi2,yeqc);
+	phi2 = TFormulaAddQuantor(bank,phi2,true,c);
+	phi2 = TFormulaAddQuantor(bank,phi2,false,y);
+	phi2 = TFormulaAddQuantor(bank,phi2,true,x);
+	
+	// join
+	
+	temp2 = TFormulaFCodeAlloc(bank,bank->sig->impl_code,phi2,temp2);
+	
+	WFormula_p schemaaswformula = WTFormulaAlloc(bank,temp2);
+	long res = WFormulaCNF(schemaaswformula,final,state->terms,state->freshvars);
+	//printf("\nR clauses: %ld\n",res);
+	return final;
 }
+/*-----------------------------------------------------------------------
+//
+// Function: ClauseMergeVars()
+//
+//   Create a copy of clause in which the two variables x and y are
+//   merged, or, more exactly, every occurrence of x is replaced by
+//   one in y.
+//
+// Global Variables: -
+//
+// Side Effects    : Memory operations
+//
+/----------------------------------------------------------------------*/
+
+
+Clause_p ClauseMergeVars(Clause_p clause,  TB_p bank, Term_p x, Term_p y)
+{
+   Subst_p  subst = SubstAlloc();
+   Clause_p new_clause;
+   
+   SubstAddBinding(subst, x,y);
+   new_clause = ClauseCopy(clause, bank);
+   SubstDelete(subst);
+
+   return new_clause;
+}
+
 
 /*---------------------------------------------------------------------*/
 /*                         Internal Functions                          */
@@ -1647,15 +735,28 @@ static void generate_new_clauses(ProofState_p state, ProofControl_p
                                  control, Clause_p clause, Clause_p tmp_copy)
 {
 	//generate new schema instances and add to tmp_store
+   //printf("\nSchema mode!!!\n");
+   
+   state->paramod_count += compute_schemas_tform(control,
+										state->terms,
+										control->ocb,
+										clause,
+										state->tmp_store, state->freshvars,
+										state);
+   
+   
+   /*
    if (GetTotalCPUTime()>3000000)
    {
-	   state->paramod_count += compute_schemas(control,
+	   printf("\nSchema mode!!!\n");
+	   state->paramod_count += compute_schemas_tform(control,
 										state->terms,
 										control->ocb,
 										clause,
 										state->tmp_store, state->freshvars,
 										state);
    }
+   */
     //
    if(control->heuristic_parms.enable_eq_factoring)
    {
@@ -2555,33 +1656,18 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
    Clause_p         clause, resclause, tmp_copy, empty, arch_copy = NULL;
    FVPackedClause_p pclause;
    SysDate          clausedate;
-   /*
-   long deleted;
-   deleted = ClauseSetDeleteCopies(state->unprocessed);
-   if (deleted > 0)
-   {
-	   printf("\nDeleted %ld duplicate clauses.\n");
-   }
-   */
-   //printf("state->unprocessed:\n");
-   //ClauseSetPrint(GlobalOut,state->unprocessed,false);
+   
    clause = control->hcb->hcb_select(control->hcb,
                               state->unprocessed);
-   /*
-   state->paramod_count += compute_schemas(control,
-									state->terms,
-									control->ocb,
-									clause,
-                                    state->tmp_store, state->freshvars,
-                                    state);
-          
-   */
-   if(!clause)
-   {
-	  printf("\nSelected a null clause from state->unprocessed\n");
-      return NULL;
-   }
    //EvalListPrintComment(GlobalOut, clause->evaluations); printf("\n");
+   
+   if (!clause)
+   {
+	   return NULL;
+   }
+   
+   //test_tf(state->terms,clause);
+   
    if(OutputLevel==1)
    {
       putc('#', GlobalOut);
@@ -2605,20 +1691,20 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
    {
       arch_copy = ClauseArchiveCopy(state->archive, clause);
    }
-
    if(!(pclause = ForwardContractClause(state, control,
                                         clause, true,
                                         control->heuristic_parms.forward_context_sr,
                                         control->heuristic_parms.condensing,
                                         FullRewrite)))
    {
+	  //printf("\nForwardContractClause\n");
       if(arch_copy)
       {
          ClauseSetDeleteEntry(arch_copy);
       }
       return NULL;
    }
-
+   
    if(ClauseIsSemFalse(pclause->clause))
    {
       state->answer_count ++;
@@ -2757,15 +1843,15 @@ Clause_p Saturate(ProofState_p state, ProofControl_p control, long
       sat_check_ttinsert_limit = control->heuristic_parms.sat_check_ttinsert_limit;
 
    //  Create the schema instances corresponding to any axioms and add them to tmp_store
-   //  This hurts performance so I'm commenting it out
-   
+   //  With the delay of schema computation, it is a good idea to do this first.
+   /*
    compute_schemas_set(control,
 						state->terms,
 						control->ocb,
 						state->axioms,
 						state->tmp_store, state->freshvars,
 						state);
-   
+   */
    
    
    // Begin the proof procedure
